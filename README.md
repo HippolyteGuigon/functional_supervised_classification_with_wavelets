@@ -43,27 +43,19 @@ The proposed solution consists of reducing the dimensionality **without losing t
 
 Each observation is assumed to belong to
 
-\[
-L^2([0,1]),
-\]
+`L²([0,1])`
 
 and admits the wavelet expansion
 
-\[
-X(t)
-=
-\sum_{j=0}^{\infty}
-\sum_{k=0}^{2^j-1}
-\zeta_{j,k}\psi_{j,k}(t)
-+
-\eta\phi(t),
-\]
+```text
+X(t) = Σⱼ₌₀^∞ Σₖ₌₀²ʲ⁻¹ ζⱼₖ ψⱼₖ(t) + η φ(t)
+```
 
 where
 
-- \(\phi\) is the scaling function,
-- \(\psi_{j,k}\) are wavelet basis functions,
-- \(\zeta_{j,k}\) are the associated wavelet coefficients.
+- `φ` is the scaling function;
+- `ψⱼₖ` are the wavelet basis functions;
+- `ζⱼₖ` are the associated wavelet coefficients.
 
 This representation provides a localized description of the signal in both **time** and **frequency**, which is one of the major advantages of wavelets over Fourier bases. :contentReference[oaicite:2]{index=2}
 
@@ -73,20 +65,17 @@ This representation provides a localized description of the signal in both **tim
 
 Instead of working in the infinite-dimensional Hilbert space, the signal is approximated by truncating the expansion at a fixed resolution level \(J\):
 
-\[
-X(t)
-\approx
-\sum_{j=1}^{2^J}
-X_j\psi_j(t).
-\]
+```text
+X(t) ≈ Σⱼ₌₁²ᴶ Xⱼ ψⱼ(t)
+```
 
 The resulting representation is finite-dimensional but still contains many coefficients.
 
 A key contribution of the paper consists in **ranking the wavelet coefficients according to their empirical energy over the training sample**
 
-\[
-\sum_{i=1}^{n} X_{ij}^2,
-\]
+```text
+Σᵢ₌₁ⁿ X²ᵢⱼ
+```
 
 and selecting only the most informative ones.
 
@@ -98,30 +87,19 @@ This adaptive ordering produces a data-driven reduction of the feature space whi
 
 For every possible retained dimension
 
-\[
-d=1,\ldots,2^J,
-\]
+`d = 1, ..., 2ᴶ`
 
 a classifier is trained on the first \(d\) reordered coefficients.
 
 The optimal pair
 
-\[
-(\hat d,\hat g)
-\]
+`(d̂, ĝ)`
 
 is selected by minimizing the empirical classification error over an independent validation set
 
-\[
-(\hat d,\hat g)
-=
-\operatorname*{arg\,min}
-\frac1m
-\sum_{i=n+1}^{n+m}
-\mathbf1_{\{
-g(X_i)\neq Y_i
-\}}.
-\]
+```text
+(d̂, ĝ) = arg min (1/m) Σᵢ₌ₙ₊₁ⁿ⁺ᵐ 𝟙[g(Xᵢ) ≠ Yᵢ]
+```
 
 This automatic selection simultaneously determines
 
@@ -142,19 +120,13 @@ One of the strongest theoretical results established in the paper is a consisten
 
 The selected classifier satisfies an upper bound of the form
 
-\[
-\mathbb E[L(\hat g)]-L^*
-\le
-\text{Approximation Error}
-+
-\text{Estimation Error}
-+
-\text{Complexity Term},
-\]
+```text
+E[L(ĝ)] − L* ≤ Approximation Error + Estimation Error + Complexity Term
+```
 
 where
 
-- \(L^*\) denotes the Bayes risk,
+- - `L*` denotes the Bayes risk;
 - the approximation error comes from truncating the wavelet expansion,
 - the estimation error depends on the chosen classifier,
 - the complexity term is controlled through Vapnik–Chervonenkis theory and shatter coefficients.
