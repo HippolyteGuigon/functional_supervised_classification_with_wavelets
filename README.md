@@ -20,16 +20,14 @@ The paper addresses the problem of **supervised classification when observations
 
 More formally, the learning sample consists of independent observations
 
-\[
-(X_i,Y_i), \qquad i=1,\ldots,n,
-\]
+`(Xᵢ, Yᵢ),  i = 1, ..., n`
 
 where
 
-- \(X_i \in \mathcal H\) belongs to an infinite-dimensional Hilbert space (typically \(L^2([0,1])\)),
-- \(Y_i\in\{0,1\}\) denotes the class label.
+- `Xᵢ ∈ 𝓗` belongs to an infinite-dimensional Hilbert space (typically `L²([0,1])`);
+- `Yᵢ ∈ {0,1}` denotes the class label.
 
-Unlike classical machine learning where data naturally lie in \(\mathbb R^d\), functional observations are entire curves, signals or time series.
+Unlike classical machine learning where data naturally lie in `ℝᵈ`, functional observations are entire curves, signals or time series.
 
 This infinite-dimensional setting immediately raises one of the main challenges of Functional Data Analysis:
 
