@@ -100,14 +100,14 @@ One of the strongest theoretical results established in the paper is a consisten
 
 The selected classifier satisfies an upper bound of the form
 
-$$\mathbb{E}\bigl[L(\hat{g})\bigr] - L^* \;\leq\; \underbrace{\text{Approximation Error}}_{\text{wavelet truncation}} + \underbrace{\text{Estimation Error}}_{\text{classifier}} + \underbrace{\text{Complexity Term}}_{\text{VC theory}}$$
+$$\mathbb{E}\!\left[L(\hat{g})\right] - L^* \;\leq\; \varepsilon_{\mathrm{approx}} + \varepsilon_{\mathrm{estim}} + \varepsilon_{\mathrm{complex}}$$
 
 where
 
 - $L^*$ denotes the Bayes risk;
-- the approximation error comes from truncating the wavelet expansion,
-- the estimation error depends on the chosen classifier,
-- the complexity term is controlled through Vapnik–Chervonenkis theory and shatter coefficients.
+- $\varepsilon_{\mathrm{approx}}$ is the approximation error coming from truncating the wavelet expansion;
+- $\varepsilon_{\mathrm{estim}}$ is the estimation error that depends on the chosen classifier;
+- $\varepsilon_{\mathrm{complex}}$ is the complexity term controlled through Vapnik–Chervonenkis theory and shatter coefficients.
 
 Under suitable assumptions, the classifier is proved to be **consistent**, meaning that its expected risk converges to the Bayes optimal risk.
 
