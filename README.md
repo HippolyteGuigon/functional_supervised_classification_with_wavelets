@@ -20,20 +20,20 @@ The paper addresses the problem of **supervised classification when observations
 
 More formally, the learning sample consists of independent observations
 
-`(Xᵢ, Yᵢ),  i = 1, ..., n`
+$$( X_i,\, Y_i ), \quad i = 1, \ldots, n$$
 
 where
 
-- `Xᵢ ∈ 𝓗` belongs to an infinite-dimensional Hilbert space (typically `L²([0,1])`);
-- `Yᵢ ∈ {0,1}` denotes the class label.
+- $X_i \in \mathcal{H}$ belongs to an infinite-dimensional Hilbert space (typically $L^2([0,1])$);
+- $Y_i \in \{0,1\}$ denotes the class label.
 
-Unlike classical machine learning where data naturally lie in `ℝᵈ`, functional observations are entire curves, signals or time series.
+Unlike classical machine learning where data naturally lie in $\mathbb{R}^d$, functional observations are entire curves, signals or time series.
 
 This infinite-dimensional setting immediately raises one of the main challenges of Functional Data Analysis:
 
 > **How can we perform classification while avoiding the curse of dimensionality?**
 
-The proposed solution consists of reducing the dimensionality **without losing the discriminative information contained in the original signals.** :contentReference[oaicite:1]{index=1}
+The proposed solution consists of reducing the dimensionality **without losing the discriminative information contained in the original signals.**
 
 ---
 
@@ -41,65 +41,45 @@ The proposed solution consists of reducing the dimensionality **without losing t
 
 ## Functional Representation
 
-Each observation is assumed to belong to
+Each observation is assumed to belong to $L^2([0,1])$ and admits the wavelet expansion
 
-`L²([0,1])`
-
-and admits the wavelet expansion
-
-```text
-X(t) = Σⱼ₌₀^∞ Σₖ₌₀²ʲ⁻¹ ζⱼₖ ψⱼₖ(t) + η φ(t)
-```
+$$X(t) = \sum_{j=0}^{\infty} \sum_{k=0}^{2^j - 1} \zeta_{jk}\, \psi_{jk}(t) + \eta\, \varphi(t)$$
 
 where
 
-- `φ` is the scaling function;
-- `ψⱼₖ` are the wavelet basis functions;
-- `ζⱼₖ` are the associated wavelet coefficients.
+- $\varphi$ is the scaling function;
+- $\psi_{jk}$ are the wavelet basis functions;
+- $\zeta_{jk}$ are the associated wavelet coefficients.
 
-This representation provides a localized description of the signal in both **time** and **frequency**, which is one of the major advantages of wavelets over Fourier bases. :contentReference[oaicite:2]{index=2}
+This representation provides a localized description of the signal in both **time** and **frequency**, which is one of the major advantages of wavelets over Fourier bases.
 
 ---
 
 ## Dimension Reduction
 
-Instead of working in the infinite-dimensional Hilbert space, the signal is approximated by truncating the expansion at a fixed resolution level \(J\):
+Instead of working in the infinite-dimensional Hilbert space, the signal is approximated by truncating the expansion at a fixed resolution level $J$:
 
-```text
-X(t) ≈ Σⱼ₌₁²ᴶ Xⱼ ψⱼ(t)
-```
+$$X(t) \approx \sum_{j=1}^{2^J} X_j\, \psi_j(t)$$
 
 The resulting representation is finite-dimensional but still contains many coefficients.
 
 A key contribution of the paper consists in **ranking the wavelet coefficients according to their empirical energy over the training sample**
 
-```text
-Σᵢ₌₁ⁿ X²ᵢⱼ
-```
+$$\sum_{i=1}^{n} X_{ij}^2$$
 
 and selecting only the most informative ones.
 
-This adaptive ordering produces a data-driven reduction of the feature space while preserving the coefficients carrying the highest amount of information. :contentReference[oaicite:3]{index=3}
+This adaptive ordering produces a data-driven reduction of the feature space while preserving the coefficients carrying the highest amount of information.
 
 ---
 
 ## Automatic Model Selection
 
-For every possible retained dimension
+For every possible retained dimension $d = 1, \ldots, 2^J$, a classifier is trained on the first $d$ reordered coefficients.
 
-`d = 1, ..., 2ᴶ`
+The optimal pair $(\hat{d},\, \hat{g})$ is selected by minimizing the empirical classification error over an independent validation set:
 
-a classifier is trained on the first \(d\) reordered coefficients.
-
-The optimal pair
-
-`(d̂, ĝ)`
-
-is selected by minimizing the empirical classification error over an independent validation set
-
-```text
-(d̂, ĝ) = arg min (1/m) Σᵢ₌ₙ₊₁ⁿ⁺ᵐ 𝟙[g(Xᵢ) ≠ Yᵢ]
-```
+$$(\hat{d},\, \hat{g}) = \arg\min_{(d,\, g)}\; \frac{1}{m} \sum_{i=n+1}^{n+m} \mathbf{1}\bigl[g(X_i) \neq Y_i\bigr]$$
 
 This automatic selection simultaneously determines
 
@@ -108,9 +88,9 @@ This automatic selection simultaneously determines
 
 The paper illustrates this framework using several classifiers including
 
-- k-Nearest Neighbours
+- $k$-Nearest Neighbours
 - Quadratic Discriminant Analysis (QDA)
-- Classification and Regression Trees (CART). :contentReference[oaicite:4]{index=4}
+- Classification and Regression Trees (CART).
 
 ---
 
@@ -120,18 +100,16 @@ One of the strongest theoretical results established in the paper is a consisten
 
 The selected classifier satisfies an upper bound of the form
 
-```text
-E[L(ĝ)] − L* ≤ Approximation Error + Estimation Error + Complexity Term
-```
+$$\mathbb{E}\bigl[L(\hat{g})\bigr] - L^* \;\leq\; \underbrace{\text{Approximation Error}}_{\text{wavelet truncation}} + \underbrace{\text{Estimation Error}}_{\text{classifier}} + \underbrace{\text{Complexity Term}}_{\text{VC theory}}$$
 
 where
 
-- - `L*` denotes the Bayes risk;
+- $L^*$ denotes the Bayes risk;
 - the approximation error comes from truncating the wavelet expansion,
 - the estimation error depends on the chosen classifier,
 - the complexity term is controlled through Vapnik–Chervonenkis theory and shatter coefficients.
 
-Under suitable assumptions, the classifier is proved to be **consistent**, meaning that its expected risk converges to the Bayes optimal risk. :contentReference[oaicite:5]{index=5}
+Under suitable assumptions, the classifier is proved to be **consistent**, meaning that its expected risk converges to the Bayes optimal risk.
 
 ---
 
