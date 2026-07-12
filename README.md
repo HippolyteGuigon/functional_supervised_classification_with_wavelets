@@ -2,6 +2,8 @@
 
 > Experimental implementation and theoretical study of the methodology introduced in **"Functional Supervised Classification with Wavelets"** by Alain Berlinet, Gérard Biau and Laurent Rouvière.
 
+[Read the paper (PDF)](https://perso.univ-rennes2.fr/system/files/users/rouviere_l/classifwave.pdf)
+
 ---
 
 ## Overview
