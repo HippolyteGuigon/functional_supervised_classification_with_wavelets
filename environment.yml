@@ -1,0 +1,13 @@
+name: functional_supervised_cllassification_environment
+channels:
+  - defaults
+prefix: /Users/hippolyteguigon/mambaforge/envs/functional_supervised_cllassification_environment
+dependencies:
+  - python=3.12
+  - numpy=2.3.1
+  - scipy=1.16.0
+  - matplotlib=3.10.3
+  - pip
+  - pip:
+      - aeon==1.2.0
+      - pywavelets==1.8.0
