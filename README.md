@@ -24,7 +24,7 @@ $$( X_i,\, Y_i ), \quad i = 1, \ldots, n$$
 
 where
 
-- $X_i \in \mathcal{H}$ belongs to an infinite-dimensional Hilbert space (typically $L^2([0,1])$);
+- $X_i \in \mathcal{H}$ belongs to an infinite-dimensional Hilbert space (typically $L^2([0,1])$ );
 - $Y_i \in \{0,1\}$ denotes the class label.
 
 Unlike classical machine learning where data naturally lie in $\mathbb{R}^d$, functional observations are entire curves, signals or time series.
@@ -100,14 +100,14 @@ One of the strongest theoretical results established in the paper is a consisten
 
 The selected classifier satisfies an upper bound of the form
 
-$$\mathbb{E}\!\left[L(\hat{g})\right] - L^* \;\leq\; \varepsilon_{\mathrm{approx}} + \varepsilon_{\mathrm{estim}} + \varepsilon_{\mathrm{complex}}$$
+$$\mathbb{E}\bigl[L(\hat{g})\bigr] - L^* \;\leq\; \underbrace{\text{Approximation Error}}_{\text{wavelet truncation}} + \underbrace{\text{Estimation Error}}_{\text{classifier}} + \underbrace{\text{Complexity Term}}_{\text{VC theory}}$$
 
 where
 
 - $L^*$ denotes the Bayes risk;
-- $\varepsilon_{\mathrm{approx}}$ is the approximation error coming from truncating the wavelet expansion;
-- $\varepsilon_{\mathrm{estim}}$ is the estimation error that depends on the chosen classifier;
-- $\varepsilon_{\mathrm{complex}}$ is the complexity term controlled through Vapnik–Chervonenkis theory and shatter coefficients.
+- the approximation error comes from truncating the wavelet expansion,
+- the estimation error depends on the chosen classifier,
+- the complexity term is controlled through Vapnik–Chervonenkis theory and shatter coefficients.
 
 Under suitable assumptions, the classifier is proved to be **consistent**, meaning that its expected risk converges to the Bayes optimal risk.
 
@@ -170,3 +170,4 @@ Berlinet, A., Biau, G., & Rouvière, L.
 **Functional Supervised Classification with Wavelets**
 
 *Annales de l'ISUP*.
+
