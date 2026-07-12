@@ -3,9 +3,10 @@ from functional_supervised_classification.data_loading import load_ecg200
 
 X_train, y_train, _, _ = load_ecg200()
 
+index = 5  # Index of the sample to visualize
 plt.figure(figsize=(8, 4))
-plt.plot(X_train[0, 0])
-plt.title(f"Classe : {y_train[0]}")
+plt.plot(X_train[index, 0])
+plt.title(f"Classe : {y_train[index]}")
 plt.xlabel("Temps")
 plt.ylabel("Amplitude")
 
