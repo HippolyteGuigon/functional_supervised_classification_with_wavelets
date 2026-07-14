@@ -66,6 +66,15 @@ def coeff_matrix(
 
 
 def explore():
+    """
+    The goal of this function is to explore the DWT coefficient matrix for the ECG200 dataset.
+    It loads the dataset, computes the DWT coefficients, and visualizes the results.
+    
+    Args:
+        None
+    Returns:
+        None
+    """
     X_train, y_train, _, _ = load_data()
 
     signals  = X_train[:, 0, :]
