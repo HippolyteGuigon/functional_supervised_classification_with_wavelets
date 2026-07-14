@@ -23,36 +23,17 @@ import pywt
 from functional_supervised_classification.data_loading import load_ecg200 as load_data
 
 
-# ============================================================================
-# Load ECG200
-# ============================================================================
-
-X_train, y_train, _, _ = load_data()
-
-# aeon returns shape (n_samples, n_channels, n_timepoints).
-# ECG200: (100, 1, 96) — squeeze the channel dimension.
-signals = X_train[:, 0, :]   # shape (100, 96)
-
-
-# ============================================================================
-# Parameters
-# ============================================================================
-
 WAVELET = "db4"
-J = 6        # resolution level — the paper truncates expansion at level J
+J       = 6
 
 
-# ============================================================================
-# Wavelet coefficient computation  (eq. 2.3)
-# ============================================================================
-
-def compute_wavelet_coefficients(
-    signal: np.ndarray,
+def coeff_matrix(
+    signals: np.ndarray,
     wavelet: str = WAVELET,
     level: int = J,
 ) -> np.ndarray:
     """
-    Compute the full DWT coefficient vector for one signal.
+    Compute the full DWT coefficient matrix for a set of signals.
 
     Applies pywt.wavedec which computes, for each scale j and translation k:
 
@@ -62,14 +43,13 @@ def compute_wavelet_coefficients(
     matching the reindexed basis {phi_{0,0}, psi_{0,0}, psi_{1,0}, ...}
     from eq. (2.3) of the paper.
 
-    The signal is NOT normalized before projection: coefficient magnitudes
-    must preserve the true energy of the signal in each basis direction,
-    as required by the ranking criterion in eq. (2.4).
+    The signals are NOT normalized: coefficient magnitudes must preserve the
+    true energy in each basis direction, as required by eq. (2.4).
 
     Parameters
     ----------
-    signal:
-        Raw signal values on a uniform grid, shape (T,).
+    signals:
+        Raw signals on a uniform grid, shape (n, T).
     wavelet:
         PyWavelets wavelet identifier.
     level:
@@ -78,69 +58,51 @@ def compute_wavelet_coefficients(
     Returns
     -------
     np.ndarray
-        Concatenated DWT coefficients, shape (N,) with N ≈ T.
+        DWT coefficient matrix, shape (n, N_coeffs) with N_coeffs ≈ T.
     """
-    coeffs = pywt.wavedec(signal, wavelet, level=level)
-    return np.concatenate(coeffs)
+    return np.stack([
+        np.concatenate(pywt.wavedec(s, wavelet, level=level)) for s in signals
+    ])
 
 
-# Coefficient matrix for all training signals — shape (n_train, n_coefficients)
-X_coeffs = np.stack([
-    compute_wavelet_coefficients(signals[i]) for i in range(len(signals))
-])
+if __name__ == "__main__":
+    X_train, y_train, _, _ = load_data()
 
-print(f"Signal matrix     : {signals.shape}")
-print(f"Coefficient matrix: {X_coeffs.shape}")
+    # aeon returns shape (n_samples, n_channels, n_timepoints) — squeeze channel dim
+    signals = X_train[:, 0, :]
 
+    X_coeffs = coeff_matrix(signals)
 
-# ============================================================================
-# Energy-based ranking  (eq. 2.4)
-# ============================================================================
+    # Energy-based ranking (eq. 2.4)
+    energy  = np.sum(X_coeffs ** 2, axis=0)
+    ranking = np.argsort(energy)[::-1]
 
-# Empirical energy of each coefficient j summed over the training set
-energy = np.sum(X_coeffs ** 2, axis=0)
+    print(f"Signal matrix     : {signals.shape}")
+    print(f"Coefficient matrix: {X_coeffs.shape}")
+    print(f"Top-5 coefficient indices by energy : {ranking[:5]}")
+    print(f"Their empirical energies            : {energy[ranking[:5]].round(4)}")
 
-# Decreasing order: most informative basis functions first
-ranking = np.argsort(energy)[::-1]
+    fig, axes = plt.subplots(3, 1, figsize=(12, 9))
 
-print(f"\nTop-5 coefficient indices by energy : {ranking[:5]}")
-print(f"Their empirical energies            : {energy[ranking[:5]].round(4)}")
+    axes[0].plot(signals[0])
+    axes[0].set_title(f"Raw ECG signal  (class = {y_train[0]})")
+    axes[0].set_xlabel("Time step")
+    axes[0].set_ylabel("Amplitude")
 
+    axes[1].stem(X_coeffs[0], markerfmt="C1o", linefmt="C1-", basefmt="k-")
+    axes[1].set_title(
+        r"DWT coefficient vector  $X_i = (X_{i1}, \ldots, X_{i,2^J})$"
+        f"  —  wavelet: {WAVELET}, level J={J}"
+    )
+    axes[1].set_xlabel("Coefficient index $j$")
+    axes[1].set_ylabel("$X_{ij}$")
 
-# ============================================================================
-# Visualization
-# ============================================================================
+    axes[2].bar(range(len(energy)), energy[ranking], color="steelblue")
+    axes[2].set_title(
+        r"Empirical energy $\sum_{i=1}^n X_{ij}^2$ sorted by rank  (eq. 2.4)"
+    )
+    axes[2].set_xlabel("Rank (0 = most energetic)")
+    axes[2].set_ylabel("Energy")
 
-fig, axes = plt.subplots(3, 1, figsize=(12, 9))
-
-# One example signal (raw, not normalized)
-signal_ex = signals[0]
-axes[0].plot(signal_ex)
-axes[0].set_title(f"Raw ECG signal  (class = {y_train[0]})")
-axes[0].set_xlabel("Time step")
-axes[0].set_ylabel("Amplitude")
-
-# Its full DWT coefficient vector
-axes[1].stem(
-    X_coeffs[0],
-    markerfmt="C1o",
-    linefmt="C1-",
-    basefmt="k-",
-)
-axes[1].set_title(
-    r"DWT coefficient vector  $X_i = (X_{i1}, \ldots, X_{i,2^J})$"
-    f"  —  wavelet: {WAVELET}, level J={J}"
-)
-axes[1].set_xlabel("Coefficient index $j$")
-axes[1].set_ylabel("$X_{ij}$")
-
-# Empirical energy across all training signals, sorted by rank
-axes[2].bar(range(len(energy)), energy[ranking], color="steelblue")
-axes[2].set_title(
-    r"Empirical energy $\sum_{i=1}^n X_{ij}^2$ sorted by rank  (eq. 2.4)"
-)
-axes[2].set_xlabel("Rank (0 = most energetic)")
-axes[2].set_ylabel("Energy")
-
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.show()

@@ -12,26 +12,24 @@ Steps
 5. Report classification metrics on the held-out test set.
 """
 
-import numpy as np
-import pywt
 import warnings
-
+import numpy as np
+from sklearn.base import clone
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.base import clone
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
+from functional_supervised_classification.coeffient_compute import coeff_matrix
 from functional_supervised_classification.data_loading import load_ecg200 as load_data
 
-warnings.filterwarnings("ignore")  # ignore pywt warnings
+warnings.filterwarnings("ignore")
+
 # ── Parameters ────────────────────────────────────────────────────────────────
 
-WAVELET  = "db4"
-J        = 6
-D_MAX    = 50    # upper bound on dimension search (W-QDA fails for large d)
-VAL_FRAC = 0.3   # fraction of training data reserved for validation
+D_MAX    = 50   # upper bound on dimension search (W-QDA fails for large d)
+VAL_FRAC = 0.3  # fraction of training data reserved for validation
 
 CLASSIFIERS = {
     "W-NN"  : KNeighborsClassifier(),
@@ -43,7 +41,6 @@ CLASSIFIERS = {
 
 X_train_raw, y_train, X_test_raw, y_test = load_data()
 
-# aeon: (n_samples, n_channels, n_timepoints) — squeeze channel dimension
 S_train = X_train_raw[:, 0, :]
 S_test  = X_test_raw[:, 0, :]
 
@@ -52,12 +49,6 @@ S_tr, S_val, y_tr, y_val = train_test_split(
 )
 
 # ── DWT coefficient matrices ──────────────────────────────────────────────────
-
-def coeff_matrix(signals: np.ndarray) -> np.ndarray:
-    """Compute DWT coefficients for every signal; returns shape (n, N_coeffs)."""
-    return np.stack([
-        np.concatenate(pywt.wavedec(s, WAVELET, level=J)) for s in signals
-    ])
 
 C_tr  = coeff_matrix(S_tr)
 C_val = coeff_matrix(S_val)
