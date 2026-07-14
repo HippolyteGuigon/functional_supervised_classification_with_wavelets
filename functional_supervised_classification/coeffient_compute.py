@@ -24,7 +24,7 @@ from functional_supervised_classification.data_loading import load_ecg200 as loa
 
 
 WAVELET = "db4"
-J       = 6
+J       = 12
 
 
 def coeff_matrix(
@@ -65,15 +65,12 @@ def coeff_matrix(
     ])
 
 
-if __name__ == "__main__":
+def explore():
     X_train, y_train, _, _ = load_data()
 
-    # aeon returns shape (n_samples, n_channels, n_timepoints) — squeeze channel dim
-    signals = X_train[:, 0, :]
-
+    signals  = X_train[:, 0, :]
     X_coeffs = coeff_matrix(signals)
 
-    # Energy-based ranking (eq. 2.4)
     energy  = np.sum(X_coeffs ** 2, axis=0)
     ranking = np.argsort(energy)[::-1]
 
@@ -106,3 +103,7 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
+
+
+if __name__ == "__main__":
+    explore()
