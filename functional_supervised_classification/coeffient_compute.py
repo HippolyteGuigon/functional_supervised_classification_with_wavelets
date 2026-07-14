@@ -1,19 +1,19 @@
 """
-First step toward Functional Supervised Classification with Wavelets.
+Step 1 — Wavelet coefficient computation for the classification pipeline.
 
 Goal
 ----
-Compute ONE wavelet coefficient exactly as described in the paper:
+For each signal X_i, compute the full DWT coefficient vector
 
-    <X, ψ>
+    X_i = (X_i1, X_i2, ..., X_i{2^J})
 
-where
+where X_ij = <X_i, psi_j> = int_0^1 X_i(t) psi_j(t) dt
 
-    X  = one ECG signal
-    ψ  = one wavelet
+as defined in eq. (2.3) of Berlinet, Biau & Rouvière.
 
-This is NOT yet the complete wavelet transform.
-It is simply the projection of one ECG onto one wavelet.
+This vector is the input to the two subsequent steps of the pipeline:
+  - energy-based ranking of basis functions  (eq. 2.4)
+  - joint selection of dimension d and classifier g  (eq. 2.5)
 """
 
 import numpy as np
@@ -29,107 +29,118 @@ from functional_supervised_classification.data_loading import load_ecg200 as loa
 
 X_train, y_train, _, _ = load_data()
 
-# First ECG of the dataset
-signal = X_train[0, 0]
+# aeon returns shape (n_samples, n_channels, n_timepoints).
+# ECG200: (100, 1, 96) — squeeze the channel dimension.
+signals = X_train[:, 0, :]   # shape (100, 96)
 
 
 # ============================================================================
-# Wavelet coefficient
+# Parameters
 # ============================================================================
 
-def wavelet_coefficient(
+WAVELET = "db4"
+J = 6        # resolution level — the paper truncates expansion at level J
+
+
+# ============================================================================
+# Wavelet coefficient computation  (eq. 2.3)
+# ============================================================================
+
+def compute_wavelet_coefficients(
     signal: np.ndarray,
-    wavelet: np.ndarray,
-) -> float:
+    wavelet: str = WAVELET,
+    level: int = J,
+) -> np.ndarray:
     """
-    Compute the discrete inner product
+    Compute the full DWT coefficient vector for one signal.
 
-        <X, ψ>
+    Applies pywt.wavedec which computes, for each scale j and translation k:
+
+        X_ij = <X_i, psi_{j,k}>  with  psi_{j,k}(t) = 2^{j/2} psi(2^j t - k)
+
+    and returns them concatenated as [cA_J, cD_J, cD_{J-1}, ..., cD_1],
+    matching the reindexed basis {phi_{0,0}, psi_{0,0}, psi_{1,0}, ...}
+    from eq. (2.3) of the paper.
+
+    The signal is NOT normalized before projection: coefficient magnitudes
+    must preserve the true energy of the signal in each basis direction,
+    as required by the ranking criterion in eq. (2.4).
 
     Parameters
     ----------
     signal:
-        ECG signal.
-
+        Raw signal values on a uniform grid, shape (T,).
     wavelet:
-        Wavelet sampled on the same grid.
+        PyWavelets wavelet identifier.
+    level:
+        Maximum resolution level J.
 
     Returns
     -------
-    float
-        Wavelet coefficient.
+    np.ndarray
+        Concatenated DWT coefficients, shape (N,) with N ≈ T.
     """
-
-    if signal.shape != wavelet.shape:
-        raise ValueError(
-            "Signal and wavelet must have the same shape."
-        )
-
-    return np.dot(signal, wavelet)
+    coeffs = pywt.wavedec(signal, wavelet, level=level)
+    return np.concatenate(coeffs)
 
 
-# ============================================================================
-# Load a Daubechies wavelet
-# ============================================================================
+# Coefficient matrix for all training signals — shape (n_train, n_coefficients)
+X_coeffs = np.stack([
+    compute_wavelet_coefficients(signals[i]) for i in range(len(signals))
+])
 
-db4 = pywt.Wavelet("db4")
-
-# phi = scaling function
-# psi = mother wavelet
-
-phi, psi, x = db4.wavefun(level=8)
+print(f"Signal matrix     : {signals.shape}")
+print(f"Coefficient matrix: {X_coeffs.shape}")
 
 
 # ============================================================================
-# Resample the wavelet so it has the same number of samples as the ECG
+# Energy-based ranking  (eq. 2.4)
 # ============================================================================
 
-wavelet = np.interp(
-    np.linspace(0, len(psi) - 1, len(signal)),
-    np.arange(len(psi)),
-    psi,
-)
+# Empirical energy of each coefficient j summed over the training set
+energy = np.sum(X_coeffs ** 2, axis=0)
 
+# Decreasing order: most informative basis functions first
+ranking = np.argsort(energy)[::-1]
 
-# ============================================================================
-# Normalize (optional, just for visualization)
-# ============================================================================
-
-wavelet = wavelet / np.linalg.norm(wavelet)
-signal_normalized = signal / np.linalg.norm(signal)
-
-
-# ============================================================================
-# Compute the coefficient
-# ============================================================================
-
-coefficient = wavelet_coefficient(
-    signal_normalized,
-    wavelet,
-)
-
-print(f"Wavelet coefficient = {coefficient:.4f}")
+print(f"\nTop-5 coefficient indices by energy : {ranking[:5]}")
+print(f"Their empirical energies            : {energy[ranking[:5]].round(4)}")
 
 
 # ============================================================================
 # Visualization
 # ============================================================================
 
-fig, axes = plt.subplots(
-    3,
-    1,
-    figsize=(10, 8),
+fig, axes = plt.subplots(3, 1, figsize=(12, 9))
+
+# One example signal (raw, not normalized)
+signal_ex = signals[0]
+axes[0].plot(signal_ex)
+axes[0].set_title(f"Raw ECG signal  (class = {y_train[0]})")
+axes[0].set_xlabel("Time step")
+axes[0].set_ylabel("Amplitude")
+
+# Its full DWT coefficient vector
+axes[1].stem(
+    X_coeffs[0],
+    markerfmt="C1o",
+    linefmt="C1-",
+    basefmt="k-",
 )
+axes[1].set_title(
+    r"DWT coefficient vector  $X_i = (X_{i1}, \ldots, X_{i,2^J})$"
+    f"  —  wavelet: {WAVELET}, level J={J}"
+)
+axes[1].set_xlabel("Coefficient index $j$")
+axes[1].set_ylabel("$X_{ij}$")
 
-axes[0].plot(signal)
-axes[0].set_title(f"ECG (class = {y_train[0]})")
-
-axes[1].plot(wavelet)
-axes[1].set_title("Daubechies 4 mother wavelet")
-
-axes[2].plot(signal_normalized, label="Normalized ECG, coefficient = {:.4f}".format(coefficient))
-axes[2].plot(wavelet, label="Wavelet")
-axes[2].legend()
+# Empirical energy across all training signals, sorted by rank
+axes[2].bar(range(len(energy)), energy[ranking], color="steelblue")
+axes[2].set_title(
+    r"Empirical energy $\sum_{i=1}^n X_{ij}^2$ sorted by rank  (eq. 2.4)"
+)
+axes[2].set_xlabel("Rank (0 = most energetic)")
+axes[2].set_ylabel("Energy")
 
 plt.tight_layout()
 plt.show()
