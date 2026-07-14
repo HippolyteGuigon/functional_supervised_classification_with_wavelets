@@ -78,10 +78,11 @@ best_err, best_d, best_name, best_clf = np.inf, None, None, None
 for d in range(1, min(D_MAX, C_tr.shape[1]) + 1):
     for name, clf in CLASSIFIERS.items():
         try:
-            clf.fit(C_tr[:, :d], y_tr)
-            err = 1.0 - accuracy_score(y_val, clf.predict(C_val[:, :d]))
+            fitted = clone(clf)
+            fitted.fit(C_tr[:, :d], y_tr)
+            err = 1.0 - accuracy_score(y_val, fitted.predict(C_val[:, :d]))
             if err < best_err:
-                best_err, best_d, best_name, best_clf = err, d, name, clf
+                best_err, best_d, best_name, best_clf = err, d, name, fitted
         except Exception:
             continue   # W-QDA raises when d exceeds class sample count
 
@@ -89,7 +90,7 @@ for d in range(1, min(D_MAX, C_tr.shape[1]) + 1):
 
 y_pred = best_clf.predict(C_te[:, :best_d])
 
-kw = dict(average="weighted", zero_division=0)
+kw = dict(average="binary", pos_label="1", zero_division=0)
 print(f"Selected : {best_name}  |  d = {best_d}  |  val error = {best_err:.3f}")
 print(f"Accuracy : {accuracy_score(y_test,  y_pred):.3f}")
 print(f"Precision: {precision_score(y_test, y_pred, **kw):.3f}")
