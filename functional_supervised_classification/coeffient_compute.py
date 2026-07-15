@@ -88,7 +88,7 @@ def explore():
     print(f"Top-5 coefficient indices by energy : {ranking[:5]}")
     print(f"Their empirical energies            : {energy[ranking[:5]].round(4)}")
 
-    fig, axes = plt.subplots(3, 1, figsize=(12, 9))
+    _ , axes = plt.subplots(3, 1, figsize=(12, 9))
 
     axes[0].plot(signals[0])
     axes[0].set_title(f"Raw ECG signal  (class = {y_train[0]})")
