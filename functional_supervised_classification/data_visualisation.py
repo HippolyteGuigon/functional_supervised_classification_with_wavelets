@@ -2,13 +2,11 @@ import pywt
 import numpy as np
 import matplotlib.pyplot as plt
 
+from functional_supervised_classification.config import load_config
 from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
 from functional_supervised_classification.coeffient_compute import coeff_matrix, WAVELET
 
-# ── Dataset choice ─────────────────────────────────────────────────────────────
-# Switch DATASET to "phoneme" to use the paper's speech dataset
-# (Berlinet, Biau & Rouvière, Section 3.1).
-DATASET = "phoneme"   # "ecg200" | "phoneme"
+DATASET = load_config()["dataset"]
 
 # ── Load data ──────────────────────────────────────────────────────────────────
 if DATASET == "phoneme":

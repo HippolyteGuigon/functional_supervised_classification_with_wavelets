@@ -22,14 +22,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from functional_supervised_classification.coeffient_compute import coeff_matrix
+from functional_supervised_classification.config import load_config
 from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
 
 warnings.filterwarnings("ignore")
 
-# ── Dataset choice ─────────────────────────────────────────────────────────────
-# Switch DATASET to "phoneme" to use the paper's speech dataset
-# (Berlinet, Biau & Rouvière, Section 3.1).
-DATASET = "phoneme"   # "ecg200" | "phoneme"
+DATASET = load_config()["dataset"]
 
 # ── Parameters ─────────────────────────────────────────────────────────────────
 
