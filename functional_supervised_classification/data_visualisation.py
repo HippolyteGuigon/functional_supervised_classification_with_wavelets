@@ -1,26 +1,38 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pywt
 
-from functional_supervised_classification.data_loading import load_ecg200
-from functional_supervised_classification.coeffient_compute import coeff_matrix, WAVELET, J
+from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
+from functional_supervised_classification.coeffient_compute import coeff_matrix, WAVELET
 
-X_train, y_train, _, _ = load_ecg200()
+# ── Dataset choice ─────────────────────────────────────────────────────────────
+# Switch DATASET to "phoneme" to use the paper's speech dataset
+# (Berlinet, Biau & Rouvière, Section 3.1).
+DATASET = "ecg200"   # "ecg200" | "phoneme"
 
-index = 5  # Index of the sample to visualize
-signal = X_train[index, 0]
+# ── Load data ──────────────────────────────────────────────────────────────────
+if DATASET == "phoneme":
+    X_train, y_train, _, _ = load_phoneme()
+    J = 8          # 256 = 2^8 equidistant points (paper Section 3.1)
+    index = 0
+else:
+    X_train, y_train, _, _ = load_ecg200()
+    J = 7          # 96 points → max useful DWT level for db4
+    index = 5
 
-signals = X_train[:, 0, :]
-X_coeffs = coeff_matrix(signals)
-coeffs = X_coeffs[index]
+# ── Compute DWT coefficients ───────────────────────────────────────────────────
+signal   = X_train[index, 0]
+signals  = X_train[:, 0, :]
+X_coeffs = coeff_matrix(signals, level=J)
+coeffs   = X_coeffs[index]
 
-energy = np.sum(X_coeffs ** 2, axis=0)
+energy  = np.sum(X_coeffs ** 2, axis=0)
 ranking = np.argsort(energy)[::-1]
 
+# ── Visualisation ──────────────────────────────────────────────────────────────
 _, axes = plt.subplots(3, 1, figsize=(12, 10))
 
 axes[0].plot(signal)
-axes[0].set_title(f"Signal ECG brut  (classe = {y_train[index]})")
+axes[0].set_title(f"Signal brut  (classe = {y_train[index]})  —  dataset : {DATASET}")
 axes[0].set_xlabel("Pas de temps")
 axes[0].set_ylabel("Amplitude")
 

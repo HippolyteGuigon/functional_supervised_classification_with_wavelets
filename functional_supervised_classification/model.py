@@ -22,11 +22,16 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from functional_supervised_classification.coeffient_compute import coeff_matrix
-from functional_supervised_classification.data_loading import load_ecg200 as load_data
+from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
 
 warnings.filterwarnings("ignore")
 
-# ── Parameters ────────────────────────────────────────────────────────────────
+# ── Dataset choice ─────────────────────────────────────────────────────────────
+# Switch DATASET to "phoneme" to use the paper's speech dataset
+# (Berlinet, Biau & Rouvière, Section 3.1).
+DATASET = "ecg200"   # "ecg200" | "phoneme"
+
+# ── Parameters ─────────────────────────────────────────────────────────────────
 
 D_MAX    = 50   # upper bound on dimension search (W-QDA fails for large d)
 VAL_FRAC = 0.3  # fraction of training data reserved for validation
@@ -37,9 +42,12 @@ CLASSIFIERS = {
     "W-CART": DecisionTreeClassifier(),
 }
 
-# ── Data loading and train/validation split ───────────────────────────────────
+# ── Data loading and train/validation split ────────────────────────────────────
 
-X_train_raw, y_train, X_test_raw, y_test = load_data()
+if DATASET == "phoneme":
+    X_train_raw, y_train, X_test_raw, y_test = load_phoneme()
+else:
+    X_train_raw, y_train, X_test_raw, y_test = load_ecg200()
 
 S_train = X_train_raw[:, 0, :]
 S_test  = X_test_raw[:, 0, :]
@@ -48,13 +56,13 @@ S_tr, S_val, y_tr, y_val = train_test_split(
     S_train, y_train, test_size=VAL_FRAC, random_state=42, stratify=y_train
 )
 
-# ── DWT coefficient matrices ──────────────────────────────────────────────────
+# ── DWT coefficient matrices ───────────────────────────────────────────────────
 
 C_tr  = coeff_matrix(S_tr)
 C_val = coeff_matrix(S_val)
 C_te  = coeff_matrix(S_test)
 
-# ── Energy-based ranking  (eq. 2.4) ──────────────────────────────────────────
+# ── Energy-based ranking  (eq. 2.4) ───────────────────────────────────────────
 
 ranking = np.argsort(np.sum(C_tr ** 2, axis=0))[::-1]
 
@@ -62,7 +70,7 @@ C_tr  = C_tr[:, ranking]
 C_val = C_val[:, ranking]
 C_te  = C_te[:, ranking]
 
-# ── Joint selection of d and classifier  (eq. 2.5) ───────────────────────────
+# ── Joint selection of d and classifier  (eq. 2.5) ────────────────────────────
 
 best_err, best_d, best_name, best_clf = np.inf, None, None, None
 
@@ -77,11 +85,18 @@ for d in range(1, min(D_MAX, C_tr.shape[1]) + 1):
         except Exception:
             continue   # W-QDA raises when d exceeds class sample count
 
-# ── Test metrics ──────────────────────────────────────────────────────────────
+# ── Test metrics ───────────────────────────────────────────────────────────────
 
 y_pred = best_clf.predict(C_te[:, :best_d])
 
-kw = dict(average="binary", pos_label="1", zero_division=0)
+n_classes = len(np.unique(y_test))
+if n_classes == 2:
+    pos_label = sorted(np.unique(y_test))[-1]
+    kw = dict(average="binary", pos_label=pos_label, zero_division=0)
+else:
+    kw = dict(average="macro", zero_division=0)
+
+print(f"Dataset  : {DATASET}")
 print(f"Selected : {best_name}  |  d = {best_d}  |  val error = {best_err:.3f}")
 print(f"Accuracy : {accuracy_score(y_test,  y_pred):.3f}")
 print(f"Precision: {precision_score(y_test, y_pred, **kw):.3f}")
