@@ -1,3 +1,4 @@
+import pywt
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -7,17 +8,18 @@ from functional_supervised_classification.coeffient_compute import coeff_matrix,
 # ── Dataset choice ─────────────────────────────────────────────────────────────
 # Switch DATASET to "phoneme" to use the paper's speech dataset
 # (Berlinet, Biau & Rouvière, Section 3.1).
-DATASET = "ecg200"   # "ecg200" | "phoneme"
+DATASET = "phoneme"   # "ecg200" | "phoneme"
 
 # ── Load data ──────────────────────────────────────────────────────────────────
 if DATASET == "phoneme":
     X_train, y_train, _, _ = load_phoneme()
-    J = 8          # 256 = 2^8 equidistant points (paper Section 3.1)
     index = 0
 else:
     X_train, y_train, _, _ = load_ecg200()
-    J = 7          # 96 points → max useful DWT level for db4
     index = 5
+
+# J is derived from the actual signal length and wavelet to avoid boundary effects
+J = pywt.dwt_max_level(X_train.shape[2], WAVELET)
 
 # ── Compute DWT coefficients ───────────────────────────────────────────────────
 signal   = X_train[index, 0]

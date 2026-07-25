@@ -29,7 +29,7 @@ warnings.filterwarnings("ignore")
 # ── Dataset choice ─────────────────────────────────────────────────────────────
 # Switch DATASET to "phoneme" to use the paper's speech dataset
 # (Berlinet, Biau & Rouvière, Section 3.1).
-DATASET = "ecg200"   # "ecg200" | "phoneme"
+DATASET = "phoneme"   # "ecg200" | "phoneme"
 
 # ── Parameters ─────────────────────────────────────────────────────────────────
 
