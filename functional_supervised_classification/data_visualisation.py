@@ -7,6 +7,7 @@ from functional_supervised_classification.data_loading import load_ecg200, load_
 from functional_supervised_classification.coeffient_compute import coeff_matrix, WAVELET
 
 DATASET = load_config()["dataset"]
+assert DATASET in ["phoneme", "ecg200"], f"Dataset {DATASET} not supported. Choose 'phoneme' or 'ecg200'."
 
 # ── Load data ──────────────────────────────────────────────────────────────────
 if DATASET == "phoneme":

@@ -28,6 +28,7 @@ from functional_supervised_classification.data_loading import load_ecg200, load_
 warnings.filterwarnings("ignore")
 
 DATASET = load_config()["dataset"]
+assert DATASET in ["phoneme", "ecg200"], f"Dataset {DATASET} not supported. Choose 'phoneme' or 'ecg200'."
 
 # ── Parameters ─────────────────────────────────────────────────────────────────
 
