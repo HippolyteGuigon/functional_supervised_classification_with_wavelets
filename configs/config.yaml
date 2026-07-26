@@ -1,1 +1,1 @@
-dataset: "ecg200"   # "ecg200" | "phoneme"
+dataset: "phoneme"   # "ecg200" | "phoneme"
