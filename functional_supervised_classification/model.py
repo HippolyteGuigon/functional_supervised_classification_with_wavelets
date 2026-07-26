@@ -25,6 +25,7 @@ from sklearn.tree import DecisionTreeClassifier
 from functional_supervised_classification.coeffient_compute import coeff_matrix
 from functional_supervised_classification.config import load_config
 from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
+from functional_supervised_classification.data_visualisation import plot_wavelet_cluster_view
 
 warnings.filterwarnings("ignore")
 
@@ -85,6 +86,12 @@ for d in range(1, min(D_MAX, C_tr.shape[1]) + 1):
                 best_err, best_d, best_name, best_clf = err, d, name, fitted
         except Exception:
             continue   # W-QDA raises when d exceeds class sample count
+
+# ── Cluster view on the selected wavelet coefficients ─────────────────────────
+
+C_full = np.vstack([C_tr, C_val])
+y_full = np.concatenate([y_tr, y_val])
+plot_wavelet_cluster_view(C_full, y_full, best_d, DATASET)
 
 # ── Test metrics ───────────────────────────────────────────────────────────────
 
