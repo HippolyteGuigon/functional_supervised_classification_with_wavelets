@@ -19,6 +19,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from functional_supervised_classification.coeffient_compute import coeff_matrix
@@ -39,6 +40,7 @@ CLASSIFIERS = {
     "W-NN"  : KNeighborsClassifier(),
     "W-QDA" : QuadraticDiscriminantAnalysis(),
     "W-CART": DecisionTreeClassifier(),
+    "W-FFNN": MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42),
 }
 
 # ── Data loading and train/validation split ────────────────────────────────────
