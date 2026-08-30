@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 
 from functional_supervised_classification.config import load_config
 from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
-from functional_supervised_classification.coeffient_compute import coeff_matrix, WAVELET
+from functional_supervised_classification.coeffient_compute import coeff_matrix, to_periodogram, WAVELET
 
 
 def plot_wavelet_cluster_view(C, y, d, dataset_name):
@@ -66,6 +66,44 @@ def plot_wavelet_cluster_view(C, y, d, dataset_name):
     plt.show()
 
 
+def plot_domain_view(axes, curves, index, label, curve_title, curve_xlabel, curve_ylabel):
+    """Fill a column of 3 axes with: the curve, its DWT coefficient vector and
+    the sorted empirical energy of the basis functions (eq. 2.4).
+
+    Parameters
+    ----------
+    axes         : array of 3 matplotlib axes (one figure column).
+    curves       : (n, T) array of curves in a given domain (raw signals or periodograms).
+    index        : row of `curves` to display in the first two panels.
+    label        : class label of `curves[index]`, shown in the title.
+    curve_title / curve_xlabel / curve_ylabel : labels for the first panel.
+    """
+    level    = pywt.dwt_max_level(curves.shape[1], WAVELET)
+    C        = coeff_matrix(curves, level=level)
+    energy   = np.sum(C ** 2, axis=0)
+    ranking  = np.argsort(energy)[::-1]
+
+    axes[0].plot(curves[index])
+    axes[0].set_title(f"{curve_title}  (classe = {label})")
+    axes[0].set_xlabel(curve_xlabel)
+    axes[0].set_ylabel(curve_ylabel)
+
+    axes[1].stem(C[index], markerfmt="C1o", linefmt="C1-", basefmt="k-")
+    axes[1].set_title(
+        r"Vecteur de coefficients DWT  $X_i = (X_{i1}, \ldots, X_{i,2^J})$"
+        f"  —  ondelette : {WAVELET}, niveau J={level}"
+    )
+    axes[1].set_xlabel("Indice du coefficient $j$")
+    axes[1].set_ylabel("$X_{ij}$")
+
+    axes[2].bar(range(len(energy)), energy[ranking], color="steelblue")
+    axes[2].set_title(
+        r"Énergie empirique $\sum_{i=1}^n X_{ij}^2$ triée par rang  (éq. 2.4)"
+    )
+    axes[2].set_xlabel("Rang (0 = plus énergétique)")
+    axes[2].set_ylabel("Énergie")
+
+
 if __name__ == "__main__":
     DATASET = load_config()["dataset"]
     assert DATASET in ["phoneme", "ecg200"], (
@@ -80,41 +118,21 @@ if __name__ == "__main__":
         X_train, y_train, _, _ = load_ecg200()
         index = 5
 
-    # J is derived from the actual signal length and wavelet to avoid boundary effects
-    J = pywt.dwt_max_level(X_train.shape[2], WAVELET)
+    signals = X_train[:, 0, :]
+    spectra = to_periodogram(signals)   # feature engineering: raw signal -> log-periodogram
 
-    # ── Compute DWT coefficients ───────────────────────────────────────────────
-    signal   = X_train[index, 0]
-    signals  = X_train[:, 0, :]
-    X_coeffs = coeff_matrix(signals, level=J)
-    coeffs   = X_coeffs[index]
+    # ── Visualisation: time domain (left) vs periodogram domain (right) ────────
+    _, axes = plt.subplots(3, 2, figsize=(16, 11))
 
-    energy  = np.sum(X_coeffs ** 2, axis=0)
-    ranking = np.argsort(energy)[::-1]
-
-    # ── Visualisation ──────────────────────────────────────────────────────────
-    _, axes = plt.subplots(3, 1, figsize=(12, 10))
-
-    axes[0].plot(signal)
-    axes[0].set_title(f"Signal brut  (classe = {y_train[index]})  —  dataset : {DATASET}")
-    axes[0].set_xlabel("Pas de temps")
-    axes[0].set_ylabel("Amplitude")
-
-    axes[1].stem(coeffs, markerfmt="C1o", linefmt="C1-", basefmt="k-")
-    axes[1].set_title(
-        r"Vecteur de coefficients DWT  $X_i = (X_{i1}, \ldots, X_{i,2^J})$"
-        f"  —  ondelette : {WAVELET}, niveau J={J}"
+    plot_domain_view(
+        axes[:, 0], signals, index, y_train[index],
+        f"Signal brut  —  dataset : {DATASET}", "Pas de temps", "Amplitude",
     )
-    axes[1].set_xlabel("Indice du coefficient $j$")
-    axes[1].set_ylabel("$X_{ij}$")
-
-    axes[2].bar(range(len(energy)), energy[ranking], color="steelblue")
-    axes[2].set_title(
-        r"Énergie empirique $\sum_{i=1}^n X_{ij}^2$ triée par rang  (éq. 2.4)"
+    plot_domain_view(
+        axes[:, 1], spectra, index, y_train[index],
+        f"Log-périodogramme  —  dataset : {DATASET}", "Fréquence (indice)", "Log-puissance",
     )
-    axes[2].set_xlabel("Rang (0 = plus énergétique)")
-    axes[2].set_ylabel("Énergie")
 
     plt.tight_layout()
-    plt.savefig("ecg200_example.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{DATASET}_example.png", dpi=300, bbox_inches="tight")
     plt.show()
