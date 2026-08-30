@@ -72,7 +72,13 @@ else:
 
 
 def run(domain: str) -> None:
-    """Run the full pipeline (eq. 2.3–2.5) on the chosen input representation."""
+    """Run the full pipeline (eq. 2.3–2.5) on the chosen input representation.
+    
+    Arguments:
+        domain (str): The input domain to use ('raw', 'spectrum', or 'both').
+    Returns:
+        None
+    """
     tf = TRANSFORMS[domain]
     C_tr, C_val, C_te = coeff_matrix(tf(S_tr)), coeff_matrix(tf(S_val)), coeff_matrix(tf(S_test))
 
