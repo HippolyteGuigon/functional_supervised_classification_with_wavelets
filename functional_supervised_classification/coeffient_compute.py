@@ -19,6 +19,7 @@ This vector is the input to the two subsequent steps of the pipeline:
 import numpy as np
 import matplotlib.pyplot as plt
 import pywt
+from scipy.signal import periodogram
 
 from functional_supervised_classification.data_loading import load_ecg200 as load_data
 
@@ -63,6 +64,32 @@ def coeff_matrix(
     return np.stack([
         np.concatenate(pywt.wavedec(s, wavelet, level=level)) for s in signals
     ])
+
+
+def to_periodogram(signals: np.ndarray, log: bool = True) -> np.ndarray:
+    """
+    Feature engineering: replace each raw time-domain signal by its periodogram.
+
+    The periodogram is a (non-consistent) estimator of the spectral density that
+    splits the signal power across frequencies. Running the wavelet pipeline on
+    this representation instead of the raw signal mirrors Section 3.1 of
+    Berlinet, Biau & Rouvière, where the phoneme data are already
+    log-periodograms.
+
+    Parameters
+    ----------
+    signals:
+        Raw signals on a uniform grid, shape (n, T).
+    log:
+        Return log-periodograms (variance-stabilised, as in the phoneme setup).
+
+    Returns
+    -------
+    np.ndarray
+        Spectral representation, shape (n, T // 2 + 1).
+    """
+    _, power = periodogram(signals, axis=1)
+    return np.log(power + 1e-12) if log else power
 
 
 def explore():

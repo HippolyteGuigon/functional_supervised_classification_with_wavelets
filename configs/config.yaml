@@ -1,1 +1,2 @@
-dataset: "phoneme"   # "ecg200" | "phoneme"
+dataset: "phoneme"       # "ecg200" | "phoneme"
+input_domain: "both"     # "raw" | "spectrum" | "both"  (spectrum = periodogram feature engineering)
