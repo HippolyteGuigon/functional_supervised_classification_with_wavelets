@@ -134,6 +134,86 @@ Rather than being a reproduction only, this repository serves as an **experiment
 
 ---
 
+# Installation
+
+The project uses a conda/mamba environment (Python 3.12).
+
+```bash
+mamba env create -f environment.yml
+conda activate functional_supervised_classification_environment
+pip install -e .
+```
+
+Main dependencies: `numpy`, `scipy`, `matplotlib`, `pyyaml`, `pywavelets`, `aeon` (for the ECG200 dataset).
+
+---
+
+# Usage
+
+## Configuration
+
+The dataset and the input representation are selected in `configs/config.yaml`:
+
+```yaml
+dataset: "phoneme"       # "ecg200" | "phoneme"
+input_domain: "both"     # "raw" | "spectrum" | "both"  (spectrum = periodogram feature engineering)
+```
+
+- `ecg200`: ECG200 dataset (aeon), 2 classes, signals of length 96.
+- `phoneme`: phoneme dataset from Hastie, Buja & Tibshirani (1995) — 5 classes, log-periodograms of length 256, as used in Section 3.1 of the paper.
+- `input_domain` controls whether the wavelet decomposition is applied to the raw signal, to its periodogram (spectral feature engineering, see below), or both — in which case the pipeline is run once per domain for comparison.
+
+## Running the pipeline
+
+```bash
+python -m functional_supervised_classification.model
+```
+
+This runs the full classification pipeline (`functional_supervised_classification/model.py`) for the configured dataset and input domain(s):
+
+1. optional feature engineering — map each raw signal to its (log-)periodogram (`coeffient_compute.to_periodogram`);
+2. DWT coefficient computation (`coeffient_compute.coeff_matrix`, `db4` wavelet);
+3. energy-based ranking of wavelet coefficients (eq. 2.4);
+4. joint search over dimension `d` and classifier (eq. 2.5), among `W-NN`, `W-QDA`, `W-CART` and `W-FFNN` (a small feed-forward neural network);
+5. selection of the best `(d, classifier)` pair on a validation split, evaluation on the held-out test set (accuracy, precision, recall, F1);
+6. a 2D projection (PCA when `d > 2`) of the selected coefficients, colored by class, via `data_visualisation.plot_wavelet_cluster_view`.
+
+## Exploring wavelet coefficients and domains
+
+Two standalone entry points produce exploratory figures:
+
+```bash
+python -m functional_supervised_classification.coeffient_compute   # single-signal DWT exploration (ECG200)
+python -m functional_supervised_classification.data_visualisation  # raw vs. periodogram comparison for the configured dataset
+```
+
+The second script saves a figure such as the ones below, comparing the raw signal, its periodogram and the empirical energy of the wavelet coefficients in both domains:
+
+<p align="center">
+  <img src="ecg200_example.png" width="45%" alt="ECG200 raw vs. periodogram example">
+  <img src="phoneme_example.png" width="45%" alt="Phoneme raw vs. periodogram example">
+</p>
+
+---
+
+# Repository Structure
+
+```
+functional_supervised_classification/
+├── configs/
+│   └── config.yaml            # dataset & input domain selection
+├── functional_supervised_classification/
+│   ├── config.py               # YAML config loader
+│   ├── data_loading.py         # ECG200 (aeon) and phoneme (TIMIT) loaders
+│   ├── coeffient_compute.py    # DWT coefficient matrix + periodogram feature engineering
+│   ├── data_visualisation.py   # cluster view, raw-vs-spectrum exploration plots
+│   └── model.py                # full classification pipeline (eq. 2.3–2.5)
+├── environment.yml
+└── setup.py
+```
+
+---
+
 # Research Context
 
 This work is conducted as part of a **Master's Thesis in Theoretical Mathematics** at
@@ -152,15 +232,22 @@ The purpose of this repository is to bridge the gap between the theoretical resu
 
 This repository is currently under active development.
 
+Implemented so far:
+
+- Wavelet decomposition module (`coeffient_compute.coeff_matrix`, DWT via PyWavelets)
+- Functional dataset loading (ECG200 via aeon, TIMIT phoneme data)
+- Spectral feature engineering (raw signal → log-periodogram, `to_periodogram`)
+- Energy-based coefficient ranking (eq. 2.4)
+- Automatic joint selection of dimension `d` and classifier (eq. 2.5)
+- Classifier benchmark: `W-NN`, `W-QDA`, `W-CART`, `W-FFNN`
+- Visualization utilities: coefficient/energy exploration, raw-vs-spectrum comparison, 2D cluster view (PCA) of selected coefficients
+- Configurable dataset and input-domain selection (`configs/config.yaml`)
+
 Planned milestones include
 
-- Wavelet decomposition module
-- Functional dataset generation
-- Automatic coefficient selection
-- Classifier benchmark
-- Experimental reproduction of the paper
-- Statistical evaluation
-- Visualization utilities
+- Statistical evaluation of consistency guarantees on the benchmark datasets
+- Comparison of wavelet families (Haar, Symlets, Coiflets, ...)
+- Comparison with more recent Functional Data Analysis techniques
 - Extended experiments beyond the original publication
 
 ---
