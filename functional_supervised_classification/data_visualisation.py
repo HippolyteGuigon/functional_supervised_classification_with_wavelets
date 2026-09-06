@@ -6,6 +6,57 @@ from sklearn.decomposition import PCA
 from functional_supervised_classification.config import load_config
 from functional_supervised_classification.data_loading import load_ecg200, load_phoneme
 from functional_supervised_classification.coeffient_compute import coeff_matrix, to_periodogram, WAVELET
+from functional_supervised_classification.representation import (
+    significance_mask,
+    usage_frequency,
+    feature_ranking,
+)
+
+
+def plot_usage_frequency(C, d, significance_rule="top_m", significance_param=None,
+                         dataset_name=""):
+    """Show the usage frequency phi_{j,k} of the wavelet features  (eq. 2.4').
+
+    Left panel  : phi_{j,k} against the raw coefficient index (time-frequency map).
+    Right panel : phi_{j,k} sorted by rank, with the retained dimension d marked
+                  -- the visual analogue of the energy-decay plot for the
+                  proposed common-representation rule.
+
+    Parameters
+    ----------
+    C                  : (n, p) DWT coefficient matrix.
+    d                  : number of leading features kept by the pipeline.
+    significance_rule  : "top_m" | "quantile" | "universal"  (see representation.py).
+    significance_param : rule parameter, or None for its default.
+    dataset_name       : string used in the figure title.
+    """
+    mask = significance_mask(C, rule=significance_rule, param=significance_param)
+    phi = usage_frequency(mask)
+    order = feature_ranking(
+        C, selection_rule="usage",
+        significance_rule=significance_rule, significance_param=significance_param,
+    )
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4.5))
+
+    axes[0].stem(phi, markerfmt="C1o", linefmt="C1-", basefmt="k-")
+    axes[0].set_title(r"Fréquence d'utilisation $\varphi_{j,k}$ par indice de coefficient")
+    axes[0].set_xlabel("Indice du coefficient $(j,k)$")
+    axes[0].set_ylabel(r"$\varphi_{j,k}$")
+    axes[0].set_ylim(0, 1)
+
+    axes[1].bar(range(len(phi)), phi[order], color="steelblue")
+    axes[1].axvline(d - 0.5, color="C3", linestyle="--", label=f"$d = {d}$")
+    axes[1].set_title(r"$\varphi_{j,k}$ triée par rang  (règle éq. 2.4$'$)")
+    axes[1].set_xlabel("Rang (0 = plus souvent utilisé)")
+    axes[1].set_ylabel(r"$\varphi_{j,k}$")
+    axes[1].set_ylim(0, 1)
+    axes[1].legend()
+
+    seuil = significance_rule if significance_param is None else f"{significance_rule}={significance_param:g}"
+    fig.suptitle(f"Représentation commune par fréquence d'utilisation — {dataset_name}  (seuil : {seuil})")
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_wavelet_cluster_view(C, y, d, dataset_name):

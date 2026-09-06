@@ -81,6 +81,44 @@ This adaptive ordering produces a data-driven reduction of the feature space whi
 
 ---
 
+## Common Representation Rule (eq. 2.4′)
+
+The *common representation* is the map that sends every curve to the same finite
+subset $S_d$ of wavelet coefficients:
+
+$$\Phi:\; x \longmapsto \bigl(\langle x, \psi_{j,k}\rangle\bigr)_{(j,k)\in S_d}\in\mathbb{R}^{d}$$
+
+The paper builds $S_d$ from the energy ranking above. Energy is not robust: a
+single curve with a large coefficient in $(j,k)$ is enough to pull that index
+into the "common" representation even if no other curve uses it.
+
+This repository adds an alternative rule (requested by the thesis supervisor):
+rank the time-frequency features $(j,k)$ by **how frequently they are used**
+across the sample. With a per-signal significance threshold $\tau_i$,
+
+$$s_{i,j,k} = \mathbf{1}\bigl[\,|X_{i,j,k}| > \tau_i\,\bigr],
+\qquad
+\varphi_{j,k} = \frac{1}{n}\sum_{i=1}^{n} s_{i,j,k},
+\qquad
+S_d = \text{top-}d \ \text{of}\ \varphi_{j,k}$$
+
+Three threshold rules are implemented (`significance.rule` in
+`configs/config.yaml`): `top_m` (the $m$ largest coefficients of each signal),
+`quantile` (global quantile $q$ of $|X|$) and `universal` (Donoho–Johnstone
+$\tau = c\,\hat\sigma\sqrt{2\ln p}$). A class-conditional variant
+(`usage_discriminant`) ranks by the cross-class gap
+$\Delta_{j,k} = \bigl|\varphi^{(1)}_{j,k} - \varphi^{(0)}_{j,k}\bigr|$, targeting
+discriminative power directly.
+
+The threshold, the dimension $d$ and the classifier are selected jointly by
+$K$-fold cross-validation (next section); the ranking is recomputed inside every
+fold from that fold's training rows only. Selection stability is reported as the
+mean pairwise Jaccard overlap of the retained index sets across folds.
+Implemented in `functional_supervised_classification.representation`; the energy
+rule (`selection_rule: "energy"`) remains available as the baseline.
+
+---
+
 ## Spectral Feature Engineering (Periodogram)
 
 Beyond the raw time-domain signal, the pipeline can operate on its **periodogram**, mirroring the phoneme setup of Section 3.1 of the paper, where the observations are already log-periodograms of speech recordings.
@@ -103,20 +141,29 @@ The subsequent wavelet decomposition and dimension-reduction steps (eq. 2.3–2.
 
 For every possible retained dimension $d = 1, \ldots, 2^J$, a classifier is trained on the first $d$ reordered coefficients.
 
-The optimal pair $(\hat{d},\, \hat{g})$ is selected by minimizing the empirical classification error over an independent validation set:
+The optimal triple $(\hat{\tau},\, \hat{d},\, \hat{g})$ — significance threshold, wavelet dimension and classifier — is selected by minimizing the cross-validated classification error:
 
-$$(\hat{d},\, \hat{g}) = \arg\min_{(d,\, g)}\; \frac{1}{m} \sum_{i=n+1}^{n+m} \mathbf{1}\bigl[g(X_i) \neq Y_i\bigr]$$
+$$(\hat{\tau},\, \hat{d},\, \hat{g}) = \arg\min_{(\tau,\, d,\, g)}\; \frac{1}{K}\sum_{f=1}^{K} \widehat{\text{err}}_f(\tau,\, d,\, g)$$
 
-This automatic selection simultaneously determines
+For the energy rule the threshold drops out and this reduces to the paper's $(\hat d, \hat g)$ search. This automatic selection simultaneously determines
 
+- the significance threshold of the common-representation rule,
 - the optimal wavelet dimension,
 - the optimal classifier.
 
-The paper illustrates this framework using several classifiers including
+The paper illustrates this framework using several classifiers, each applied to the truncated coefficient vector $X^{(d)} = (X_1, \ldots, X_d) \in \mathbb{R}^d$:
 
-- $k$-Nearest Neighbours
-- Quadratic Discriminant Analysis (QDA)
-- Classification and Regression Trees (CART).
+- **$k$-Nearest Neighbours (W-NN)** — majority vote among the $k$ nearest training points in $\mathbb{R}^d$ for the Euclidean distance:
+
+$$g_{\text{NN}}(x) = \underset{y \in \{0,1\}}{\arg\max} \sum_{i \in \mathcal{N}_k(x)} \mathbf{1}[Y_i = y], \qquad \mathcal{N}_k(x) = k \text{ nearest } X_i^{(d)} \text{ to } x$$
+
+- **Quadratic Discriminant Analysis (W-QDA)** — each class is modeled as Gaussian, $X^{(d)} \mid Y = y \sim \mathcal{N}(\mu_y, \Sigma_y)$, and the classifier picks the class of highest posterior, equivalently the lowest quadratic discriminant score
+
+$$\delta_y(x) = -\tfrac{1}{2}\log|\Sigma_y| - \tfrac{1}{2}(x-\mu_y)^\top \Sigma_y^{-1}(x-\mu_y) + \log \pi_y$$
+
+- **Classification and Regression Trees (W-CART)** — recursive binary partitioning of $\mathbb{R}^d$ along axis-aligned splits, choosing at each node the split $(j, s)$ minimizing the weighted impurity (e.g. Gini index) of the resulting children.
+
+- **Feed-forward neural network (W-FFNN)**, added in this repository as an extension beyond the original paper — a multilayer perceptron $g_{\text{FFNN}}(x) = \sigma\bigl(W_L\, h_{L-1} \circ \cdots \circ h_1(x) + b_L\bigr)$ with hidden layers $h_\ell(x) = \text{ReLU}(W_\ell x + b_\ell)$, trained by backpropagation to minimize the empirical cross-entropy on $(X_i^{(d)}, Y_i)$.
 
 ---
 
@@ -181,11 +228,20 @@ The dataset and the input representation are selected in `configs/config.yaml`:
 ```yaml
 dataset: "phoneme"       # "ecg200" | "phoneme"
 input_domain: "both"     # "raw" | "spectrum" | "both"  (spectrum = periodogram feature engineering)
+
+selection_rule: "usage"  # "energy" (eq. 2.4) | "usage" (eq. 2.4') | "usage_discriminant"
+significance:
+  rule: "top_m"          # "top_m" | "quantile" | "universal"  (used by the "usage" rules only)
+  param: null            # null -> tuned by cross-validation; a concrete value pins it
+cv_folds: 5              # folds for the joint (threshold, d, classifier) selection
+d_max: 50                # upper bound on the dimension search
 ```
 
 - `ecg200`: ECG200 dataset (aeon), 2 classes, signals of length 96.
 - `phoneme`: phoneme dataset from Hastie, Buja & Tibshirani (1995) — 5 classes, log-periodograms of length 256, as used in Section 3.1 of the paper.
 - `input_domain` controls whether the wavelet decomposition is applied to the raw signal, to its periodogram (spectral feature engineering, see below), or both — in which case the pipeline is run once per domain for comparison.
+- `selection_rule` chooses how the common representation $S_d$ is built (see *Common Representation Rule* above). `usage`/`usage_discriminant` also read the `significance` block; `energy` ignores it.
+- Tests use a throw-away config via the `FSC_CONFIG` environment variable.
 
 ## Running the pipeline
 
@@ -197,10 +253,14 @@ This runs the full classification pipeline (`functional_supervised_classificatio
 
 1. optional feature engineering — map each raw signal to its (log-)periodogram (`coeffient_compute.to_periodogram`);
 2. DWT coefficient computation (`coeffient_compute.coeff_matrix`, `db4` wavelet);
-3. energy-based ranking of wavelet coefficients (eq. 2.4);
-4. joint search over dimension `d` and classifier (eq. 2.5), among `W-NN`, `W-QDA`, `W-CART` and `W-FFNN` (a small feed-forward neural network);
-5. selection of the best `(d, classifier)` pair on a validation split, evaluation on the held-out test set (accuracy, precision, recall, F1);
-6. a 2D projection (PCA when `d > 2`) of the selected coefficients, colored by class, via `data_visualisation.plot_wavelet_cluster_view`.
+3. common-representation ranking of the wavelet coefficients — energy (eq. 2.4) or usage frequency (eq. 2.4′), per `selection_rule` (`representation.feature_ranking`);
+4. joint $K$-fold cross-validated search over significance threshold, dimension `d` and classifier, among `W-NN`, `W-QDA`, `W-CART` and `W-FFNN` (a small feed-forward neural network) — the ranking is recomputed inside each fold from its training rows only;
+5. refit of the best `(threshold, d, classifier)` on the whole training set, evaluation on the held-out test set (accuracy, precision, recall, F1), plus selection stability (mean pairwise Jaccard of the retained index sets across folds);
+6. a 2D projection of the selected coefficients, colored by class, via `data_visualisation.plot_wavelet_cluster_view`. For $d > 2$, this projection is obtained by Principal Component Analysis: writing $\hat{\Sigma}$ for the empirical covariance matrix of $\{X_i^{(d)}\}$ and $v_1, v_2$ for the eigenvectors of $\hat{\Sigma}$ associated with its two largest eigenvalues, each point is mapped to
+
+$$Z_i = \bigl(v_1^\top X_i^{(d)},\; v_2^\top X_i^{(d)}\bigr) \in \mathbb{R}^2$$
+
+i.e. the 2D subspace capturing the maximal share of variance among the $d$ retained coefficients.
 
 ## Exploring wavelet coefficients and domains
 
@@ -225,16 +285,22 @@ The second script saves a figure such as the ones below, comparing the raw signa
 ```
 functional_supervised_classification/
 ├── configs/
-│   └── config.yaml            # dataset & input domain selection
+│   └── config.yaml            # dataset, input domain, common-representation rule
 ├── functional_supervised_classification/
-│   ├── config.py               # YAML config loader
+│   ├── config.py               # YAML config loader ($FSC_CONFIG override)
 │   ├── data_loading.py         # ECG200 (aeon) and phoneme (TIMIT) loaders
 │   ├── coeffient_compute.py    # DWT coefficient matrix + periodogram feature engineering
-│   ├── data_visualisation.py   # cluster view, raw-vs-spectrum exploration plots
-│   └── model.py                # full classification pipeline (eq. 2.3–2.5)
+│   ├── representation.py       # common-representation rules: energy / usage frequency (eq. 2.4')
+│   ├── data_visualisation.py   # cluster view, usage-frequency plot, raw-vs-spectrum plots
+│   └── model.py                # full classification pipeline (eq. 2.3–2.5, CV model selection)
+├── tests/
+│   └── test_representation.py  # unit tests + end-to-end pipeline smoke test
 ├── environment.yml
 └── setup.py
 ```
+
+Run the tests with `python tests/test_representation.py` (no pytest required) or
+`pytest tests/`.
 
 ---
 
@@ -261,14 +327,17 @@ Implemented so far:
 - Wavelet decomposition module (`coeffient_compute.coeff_matrix`, DWT via PyWavelets)
 - Functional dataset loading (ECG200 via aeon, TIMIT phoneme data)
 - Spectral feature engineering (raw signal → log-periodogram, `to_periodogram`)
-- Energy-based coefficient ranking (eq. 2.4)
-- Automatic joint selection of dimension `d` and classifier (eq. 2.5)
+- Common-representation rules (`representation.py`): energy ranking (eq. 2.4) and the usage-frequency rules (eq. 2.4′) — `usage` and `usage_discriminant` — with `top_m` / `quantile` / `universal` significance thresholds
+- Automatic joint selection of significance threshold, dimension `d` and classifier by $K$-fold cross-validation, plus selection-stability (Jaccard) reporting
 - Classifier benchmark: `W-NN`, `W-QDA`, `W-CART`, `W-FFNN`
-- Visualization utilities: coefficient/energy exploration, raw-vs-spectrum comparison, 2D cluster view (PCA) of selected coefficients
-- Configurable dataset and input-domain selection (`configs/config.yaml`)
+- Visualization utilities: coefficient/energy exploration, usage-frequency plot, raw-vs-spectrum comparison, 2D cluster view (PCA) of selected coefficients
+- Configurable dataset, input-domain and common-representation rule (`configs/config.yaml`, `$FSC_CONFIG` override)
+- Test suite (`tests/test_representation.py`): unit tests for the selection rules and an end-to-end pipeline smoke test
 
 Planned milestones include
 
+- Systematic energy-vs-usage benchmark on ECG200 and phoneme, raw and spectrum domains
+- Per-scale (level-wise) universal threshold in `significance_mask`
 - Statistical evaluation of consistency guarantees on the benchmark datasets
 - Comparison of wavelet families (Haar, Symlets, Coiflets, ...)
 - Comparison with more recent Functional Data Analysis techniques
