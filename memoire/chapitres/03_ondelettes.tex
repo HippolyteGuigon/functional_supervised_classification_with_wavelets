@@ -24,7 +24,11 @@ forment une base orthonormée de $\Lp$ \citep[section 9.3]{daubechies1992ten}, o
   X = \eta\,\phi_{0,0} + \sum_{j\ge0}\sum_{k=0}^{2^j-1}\zeta_{j,k}\psi_{j,k},
   \qquad \zeta_{j,k}=\langle X,\psi_{j,k}\rangle,\quad \eta=\langle X,\phi_{0,0}\rangle,
 \end{equation}
-la série convergeant dans $\Lp$. On réindexe la base en $\{\psi_1,\psi_2,\dots\}=\{\phi_{0,0},\psi_{0,0},\psi_{1,0},\psi_{1,1},\psi_{2,0},\dots\}$, de sorte que $X=\sum_{j\ge1}X_j\psi_j$ avec $X_j=\langle X,\psi_j\rangle$, et que les $2^J$ premières fonctions engendrent exactement $V_J$.
+la série convergeant dans $\Lp$. On réindexe la base en
+\[
+  \{\psi_1,\psi_2,\psi_3,\dots\}=\{\phi_{0,0},\psi_{0,0},\psi_{1,0},\psi_{1,1},\psi_{2,0},\dots\},
+\]
+de sorte que $X=\sum_{j\ge1}X_j\psi_j$ avec $X_j=\langle X,\psi_j\rangle$, et que les $2^J$ premières fonctions engendrent exactement $V_J$.
 
 \begin{proposition}[Parseval et projection]\label{prop:parseval}
 Pour tout $X\in\Lp$ et tout $J\ge0$, notons $P_J X=\sum_{j=1}^{2^J}X_j\psi_j$ la projection orthogonale de $X$ sur $V_J$. Alors
@@ -97,8 +101,11 @@ où $\gamma\approx0{,}5772$ est la constante d'Euler. Le log-périodogramme est 
 
 \paragraph{Conventions.} Nous retirons la moyenne de la série avant la transformée (retrait de tendance constant), puis nous supprimons l'ordonnée $I(0)$, nulle après centrage et qui écraserait l'échelle logarithmique. Pour une série de longueur $T$, on conserve les fréquences $\omega_k$, $1\le k\le\lfloor T/2\rfloor$, soit $48$ ordonnées pour les ECG200.
 
-\paragraph{Invariance par translation.} Si $y_t=x_{t-s}$ (translation circulaire), alors $d_y(\omega_k)=e^{-2\pi i\omega_ks}d_x(\omega_k)$ et $I_y=I_x$. Le périodogramme oublie la phase, donc la position temporelle des motifs. C'est un avantage lorsque l'information discriminante est fréquentielle (phonèmes), et un inconvénient lorsque la forme et la position d'un motif comptent (complexe QRS d'un électrocardiogramme). Nos expériences du \cref{sec:exp-ecg} confirment ce point.
+\paragraph{Invariance par translation.} Si $y_t=x_{t-s}$, les indices étant pris modulo $T$ (translation circulaire), alors
+\[
+  d_y(\omega_k)=e^{-2\pi i\omega_ks}\,d_x(\omega_k)\qquad\text{et donc}\qquad I_y=I_x .
+\] Le périodogramme oublie la phase, donc la position temporelle des motifs. C'est un avantage lorsque l'information discriminante est fréquentielle (phonèmes), et un inconvénient lorsque la forme et la position d'un motif comptent (complexe QRS d'un électrocardiogramme). Nos expériences du \cref{sec:exp-ecg} confirment ce point.
 
 \begin{remarque}[Données déjà spectrales]\label{rem:phoneme-spectral}
-Les données \emph{phoneme} sont déjà des log-périodogrammes. Leur appliquer à nouveau la transformation produirait le périodogramme d'un log-périodogramme, objet sans interprétation physique ; dans une première version de nos expériences, cette erreur faisait chuter l'exactitude de $0{,}86$ à environ $0{,}6$. Ces données sont donc utilisées telles quelles : elles \emph{sont} la représentation spectrale.
+Les courbes du jeu de données \emph{phoneme} sont déjà des log-périodogrammes. Leur appliquer à nouveau la transformation produirait le périodogramme d'un log-périodogramme, objet sans interprétation physique ; dans une première version de nos expériences, cette erreur faisait chuter l'exactitude de $0{,}86$ à environ $0{,}6$. Ces données sont donc utilisées telles quelles : elles \emph{sont} la représentation spectrale.
 \end{remarque}

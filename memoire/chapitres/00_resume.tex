@@ -1,0 +1,24 @@
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce mémoire étudie la classification supervisée de courbes par la méthode de \citet{berlinet2008functional} : les courbes sont décomposées sur une base d'ondelettes, les fonctions de base sont réordonnées à l'aide de l'échantillon d'apprentissage, puis la dimension et la règle de classification sont choisies sur un échantillon de validation. Nous redémontrons en détail l'inégalité oracle et la consistance de cette procédure, en explicitant une hypothèse d'équivariance restée implicite. Nous formalisons l'emploi du log-périodogramme comme représentation spectrale des séries temporelles. Nous proposons enfin une nouvelle règle de représentation commune, fondée sur la fréquence à laquelle chaque fonction d'ondelette est utilisée par les courbes, après normalisation et avec un seuil global. Nous montrons qu'elle conserve les garanties de l'article et qu'elle possède en plus une concentration exponentielle sans hypothèse de moment, une influence bornée des courbes aberrantes et une invariance par changement d'échelle. Les expériences reproduisent les résultats de l'article et confirment ces propriétés : à performances comparables sur données propres, la nouvelle règle résiste à une contamination qui dégrade fortement la règle d'origine.
+
+\paragraph{Mots-clés.} Données fonctionnelles, classification supervisée, ondelettes, périodogramme, minimisation du risque empirique, découpage de l'échantillon, robustesse.
+
+\vspace{1cm}
+
+\section*{Abstract}
+
+This thesis studies supervised classification of curves with the method of \citet{berlinet2008functional}: curves are expanded on a wavelet basis, the basis functions are reordered using the training sample, and the dimension and the classification rule are selected on a validation sample. We give detailed proofs of the oracle inequality and of the consistency of this procedure, and make explicit an equivariance assumption that was left implicit. We formalise the log-periodogram as a spectral representation of time series. Finally, we propose a new common-representation rule based on how often each wavelet is used by the curves, after normalisation and with a global threshold. We prove that it keeps the guarantees of the original method and additionally enjoys exponential concentration without moment assumptions, bounded influence of outlying curves and scale invariance. The experiments reproduce the results of the paper and confirm these properties: with comparable accuracy on clean data, the new rule withstands a contamination that severely degrades the original one.
+
+\paragraph{Keywords.} Functional data, supervised classification, wavelets, periodogram, empirical risk minimisation, data splitting, robustness.
+
+\vspace{1cm}
+
+\section*{Remerciements et usage d'outils}
+
+Je remercie le Professeur Jean-Marc Freyermuth pour son encadrement et ses conseils tout au long de ce travail.
+
+\noindent Un assistant d'intelligence artificielle (Claude, Anthropic) a été utilisé pour aider à l'écriture du code, à la mise en forme en \LaTeX{} et à la rédaction. Les choix méthodologiques ont été discutés avec l'encadrant ; les démonstrations et les résultats numériques ont été vérifiés et sont assumés par l'auteur.
+
+\cleardoublepage

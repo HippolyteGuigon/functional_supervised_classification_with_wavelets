@@ -189,7 +189,11 @@ L'inégalité oracle est la même pour tous les réordonnancements. Ce qui disti
 Soit $c>0$.
 \begin{enumerate}[label=(\roman*)]
   \item \emph{Invariance d'échelle.} Si l'on remplace chaque $\bX_i$ par $a_i\bX_i$ avec $a_i\neq0$, les fréquences $\hphi_j(c)$ et la permutation $\hsigma_c$ sont inchangées. La règle de l'énergie n'a pas cette propriété.
-  \item \emph{Parcimonie.} Toute courbe utilise strictement moins de $p/c^2$ fonctions de base : $\sum_{j=1}^ps_j(\bx;c)<p/c^2$ pour tout $\bx$. Par conséquent $\sum_j\hphi_j(c)<p/c^2$ et, pour tout $\alpha\in\,]0,1]$,
+  \item \emph{Parcimonie.} Toute courbe utilise strictement moins de $p/c^2$ fonctions de base :
+  \[
+    \sum_{j=1}^ps_j(\bx;c)<\frac{p}{c^2}\qquad\text{pour tout }\bx\in\R^p .
+  \]
+  Par conséquent $\sum_j\hphi_j(c)<p/c^2$ et, pour tout $\alpha\in\,]0,1]$,
   \[
     \Card\bigl\{j:\hphi_j(c)\ge\alpha\bigr\}<\frac{p}{\alpha c^2}.
   \]
@@ -280,14 +284,14 @@ Les \cref{prop:robustesse,prop:rupture-energie} formalisent la motivation de la 
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}lcc@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{4.6cm}@{}}
 \toprule
  & Énergie \eqref{eq:energie} & Usage à seuil global \eqref{eq:usage} \\
 \midrule
 Inégalité oracle et consistance & oui (\cref{thm:oracle,cor:consistance}) & oui (\cref{thm:oracle-usage,cor:consistance-usage}) \\
 Coût de la sélection du seuil & aucun & $\log\Card(\Gamma)$ \\
 Invariance par changement d'échelle des courbes & non & oui \\
-Concentration du classement & moments d'ordre $\ge2$ requis & exponentielle, sans hypothèse \\
+Concentration du classement & moments d'ordre $\ge2$ requis, pas de vitesse universelle & exponentielle, sans hypothèse \\
 Influence d'une courbe modifiée & non bornée & au plus $1/n$ \\
 Contrôle du nombre de coefficients utilisés & non & $<p/c^2$ par courbe \\
 Utilise les étiquettes & non & non \\

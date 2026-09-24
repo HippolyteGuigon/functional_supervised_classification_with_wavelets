@@ -1,0 +1,38 @@
+\chapter{Conclusion et perspectives}\label{chap:conclusion}
+
+\section{Bilan}
+
+Ce mémoire est parti de la méthode de classification de courbes par ondelettes de \citet{berlinet2008functional} et poursuivait trois objectifs.
+
+\paragraph{Reproduction.} Nous avons redémontré en détail l'inégalité oracle, le lemme d'approximation et le corollaire de consistance de l'article, en établissant les inégalités de sélection sur lesquelles ils reposent. La relecture de la preuve a fait apparaître une hypothèse implicite, l'équivariance par permutation des règles de classification, que nous avons rendue explicite (\cref{rem:equivariance}). Sur le plan empirique, nous retrouvons les erreurs publiées sur les données de parole à quelques millièmes près pour W-NN et W-QDA, ainsi que les conclusions de l'article sur les données simulées.
+
+\paragraph{Domaine spectral.} Nous avons formalisé l'étape de périodogramme d'après \citet{shumway2011time} : estimateur non consistant de la densité spectrale, stabilisation de la variance par le logarithme, invariance par translation. Cette dernière propriété explique nos observations : le domaine spectral est le bon pour la parole, dont l'information est fréquentielle, mais pas pour les électrocardiogrammes, dont l'information est aussi dans la position des ondes.
+
+\paragraph{Nouvelle règle de représentation commune.} Nous avons proposé de classer les fonctions d'ondelettes selon leur fréquence d'utilisation, définie par un seuil global $\tau=c/\sqrt p$ appliqué aux courbes ramenées à la même énergie. Sur le plan théorique :
+\begin{itemize}
+  \item la règle hérite de l'inégalité oracle et de la consistance de l'article, le choix du seuil dans une grille finie ne coûtant qu'un terme logarithmique (\cref{thm:oracle-usage,cor:consistance-usage}) ;
+  \item la normalisation doit servir à \emph{choisir} les coefficients et non à classer, sous peine de perdre l'information portée par l'amplitude (\cref{prop:normalisation-perte}) ;
+  \item la représentation commune empirique converge exponentiellement vite vers sa version théorique, sans aucune hypothèse de moment (\cref{thm:stabilite}) ;
+  \item une courbe modifiée déplace chaque fréquence d'au plus $1/n$, alors qu'une seule courbe suffit à imposer n'importe quel indice à la règle de l'énergie (\cref{prop:robustesse,prop:rupture-energie}).
+\end{itemize}
+Sur le plan empirique, la règle d'usage fait jeu égal avec la règle de l'énergie sur les données de parole et sur les ECG dans le domaine temporel. Elle est meilleure sur les périodogrammes d'ECG et, surtout, beaucoup plus robuste : une seule courbe aberrante sur cinquante dégrade fortement la règle de l'énergie et laisse la règle d'usage intacte. Elle est en revanche moins performante sur les données simulées de l'article en petit échantillon, où l'information discriminante est portée par des coefficients rares ; cet écart disparaît quand la taille d'échantillon augmente.
+
+La règle d'usage n'est donc pas une règle « plus performante » : elle définit une représentation commune plus stable, plus robuste et plus facile à interpréter, au prix d'une perte d'efficacité lorsque la classe dépend d'un détail rare. C'est le compromis visé.
+
+\section{Limites}
+
+\begin{itemize}
+  \item Les garanties portent sur le découpage apprentissage/validation. La validation croisée, plus économe en données, n'est pas couverte.
+  \item Le \cref{thm:stabilite} suppose un écart $\gamma_d(c)$ strictement positif. Sur les données de parole, plusieurs coefficients sont utilisés par presque toutes les courbes, et le classement à l'intérieur de ce plateau n'est pas stable.
+  \item La théorie est écrite pour deux classes ; l'extension à plusieurs classes est esquissée (\cref{rem:multiclasse}) mais pas détaillée pour les familles infinies.
+  \item Les expériences de robustesse utilisent une contamination artificielle. Il faudrait les confirmer sur des données réelles contenant des artefacts.
+\end{itemize}
+
+\section{Perspectives}
+
+\begin{itemize}
+  \item \textbf{Seuils par niveau de résolution.} Le bruit se répartit uniformément sur les coefficients d'une transformée orthogonale, mais le signal non. Un seuil $c_j/\sqrt p$ dépendant du niveau $j$ pourrait mieux séparer les deux, au prix d'une grille plus grande, dont le coût reste logarithmique dans l'inégalité oracle.
+  \item \textbf{Vitesses de convergence.} Sous des hypothèses de régularité de la fonction de régression dans une boule de Besov, on pourrait chercher à quantifier le terme d'approximation $L^*_p-L^*$ en fonction de $J$ et en déduire un choix de $J$ en fonction de $n$.
+  \item \textbf{Règles hybrides.} Combiner fréquence d'utilisation et énergie, par exemple en classant par énergie moyenne \emph{parmi les courbes qui utilisent le coefficient}, pourrait conserver la robustesse tout en récupérant les coefficients rares mais très informatifs.
+  \item \textbf{Variante supervisée.} La variante qui classe les coefficients par l'écart de fréquence d'utilisation entre classes a été mise de côté, car elle ne définit plus une représentation commune. Son étude théorique demanderait de contrôler le sur-apprentissage du critère de sélection lui-même.
+\end{itemize}

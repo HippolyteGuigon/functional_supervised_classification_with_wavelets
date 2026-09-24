@@ -47,6 +47,7 @@ warnings.filterwarnings("ignore")
 RESULTS_DIR = Path(__file__).resolve().parents[1] / "results"
 
 C_GRID = (0.5, 1.0, 1.5, 2.0, 3.0)               # tau = c / sqrt(p)
+WIDE_C_GRID = (0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0)
 K_GRID = (1, 3, 5, 7, 9, 15, 25)                 # neighbours of W-NN
 FAMILIES = ("W-NN", "W-QDA", "W-CART")
 TOP_STORE = 20                                   # ranked indices kept per run
@@ -92,13 +93,14 @@ def _qda_d_max(y: np.ndarray) -> int:
     return int(min(np.unique(y, return_counts=True)[1])) - 1
 
 
-def run_once(C_tr, y_tr, C_va, y_va, C_te, y_te, rule: str, d_max: int) -> list[dict]:
+def run_once(C_tr, y_tr, C_va, y_va, C_te, y_te, rule: str, d_max: int,
+             c_grid=C_GRID) -> list[dict]:
     """
     Select (c, d, g) on the validation sequence and evaluate on the test one.
 
     Returns one record per family plus one for the joint selection ("ALL").
     """
-    params = [None] if rule == "energy" else list(C_GRID)
+    params = [None] if rule == "energy" else list(c_grid)
     cands = _candidates(len(y_tr))
     qda_max = _qda_d_max(y_tr)
     rows = []                                            # (family, err, d, c, label, g_idx)
@@ -148,7 +150,7 @@ def _split(X, y, n, m, test, seed):
 
 
 def _one_repetition(setting: str, X, y, rep: int, wavelet: str, rules, d_max: int,
-                    n: int, m: int, n_outliers: int = 0) -> list[dict]:
+                    n: int, m: int, n_outliers: int = 0, c_grid=C_GRID) -> list[dict]:
     cfg = SETTINGS[setting]
     seed = 1000 + rep
     rng = np.random.default_rng(seed)
@@ -168,7 +170,7 @@ def _one_repetition(setting: str, X, y, rep: int, wavelet: str, rules, d_max: in
     d_hi = min(d_max, C_tr.shape[1])
     out = []
     for rule in rules:
-        for rec in run_once(C_tr, y[i_tr], C_va, y[i_va], C_te, y[i_te], rule, d_hi):
+        for rec in run_once(C_tr, y[i_tr], C_va, y[i_va], C_te, y[i_te], rule, d_hi, c_grid):
             rec.update(setting=setting, wavelet=wavelet, rule=rule, rep=rep,
                        n=n, m=m, n_outliers=n_outliers)
             out.append(rec)
@@ -177,13 +179,13 @@ def _one_repetition(setting: str, X, y, rep: int, wavelet: str, rules, d_max: in
 
 def benchmark(setting: str, reps: int, wavelets=("db4",), rules=("energy", "usage"),
               d_max: int = 64, n: int | None = None, m: int | None = None,
-              outliers=(0,), n_jobs: int = -1) -> pd.DataFrame:
+              outliers=(0,), c_grid=C_GRID, n_jobs: int = -1) -> pd.DataFrame:
     """Run ``reps`` random partitions for every (wavelet, contamination level)."""
     cfg = SETTINGS[setting]
     n = n or cfg["n"]
     m = m or cfg["m"]
     X, y = cfg["load"]() if cfg["load"] is not None else (None, None)
-    jobs = [delayed(_one_repetition)(setting, X, y, r, w, rules, d_max, n, m, k)
+    jobs = [delayed(_one_repetition)(setting, X, y, r, w, rules, d_max, n, m, k, c_grid)
             for w in wavelets for k in outliers for r in range(reps)]
     res = Parallel(n_jobs=n_jobs)(jobs)
     return pd.DataFrame([rec for block in res for rec in block])
@@ -200,6 +202,11 @@ EXPERIMENTS = {
     # robustness: spikes added to a few training curves
     "contamination": lambda R: benchmark("simulation", R, wavelets=("db4",), outliers=(0, 1, 3, 5)),
     # consistency: error as the sample size grows (n = m)
+    # sensitivity of the usage rule to the threshold grid
+    "grid": lambda R: pd.concat([
+        benchmark(s, R, rules=("usage",), c_grid=WIDE_C_GRID).assign(grid="large")
+        for s in ("simulation", "phoneme", "ecg200-raw")
+    ]),
     "sample_size": lambda R: pd.concat([
         benchmark("simulation", R, wavelets=("db4",), n=s, m=s) for s in (25, 50, 100, 200, 400)
     ]),

@@ -99,12 +99,12 @@ def table_bases(name: str) -> None:
             g = sub[sub.rule == rule].groupby("wavelet").test_err
             rows.append((RULE_FR[rule], [g.mean()[w] for w in WAVELETS],
                          [g.std()[w] / np.sqrt(R) for w in WAVELETS]))
-        best = [min(rows[1][1][i], rows[2][1][i]) for i in range(len(WAVELETS))]
+        best = [min(round(rows[1][1][i], 3), round(rows[2][1][i], 3)) for i in range(len(WAVELETS))]
         for k, (lab, vals, ses) in enumerate(rows):
             cells = []
             for i, v in enumerate(vals):
                 s = _fr(v)
-                if ses is not None and np.isclose(v, best[i]):
+                if ses is not None and round(v, 3) == best[i]:
                     s = r"\textbf{" + s + "}"
                 cells.append(s)
             head = r"\multirow{3}{*}{" + fam + "}" if k == 0 else ""
@@ -280,19 +280,19 @@ def figure_data() -> None:
     ax = axes[0, 0]
     for k, cl in enumerate(np.unique(yp)):
         ax.plot(np.linspace(0, 1, 256), Xp[np.where(yp == cl)[0][0]], lw=0.7, label=cl)
-    ax.set_title("phoneme : log-périodogrammes")
+    ax.set_title("phoneme (log-périodogrammes)")
     ax.legend(fontsize=6, frameon=False, ncol=2)
     ax = axes[0, 1]
     for cl, c in zip(np.unique(ye), ("#C0602B", "#1F4E8C")):
         for i in np.where(ye == cl)[0][:4]:
             ax.plot(Xe[i], color=c, lw=0.6, alpha=0.8)
-    ax.set_title("ECG200 : signaux (classes $-1$ / $1$)")
+    ax.set_title("ECG200 (domaine temporel)")
     ax = axes[0, 2]
     P = to_periodogram(Xe)
     for cl, c in zip(np.unique(ye), ("#C0602B", "#1F4E8C")):
         for i in np.where(ye == cl)[0][:4]:
             ax.plot(np.arange(1, 49) / 96, P[i], color=c, lw=0.6, alpha=0.8)
-    ax.set_title("ECG200 : log-périodogrammes")
+    ax.set_title("ECG200 (log-périodogramme)")
     ax.set_xlabel("fréquence (cycles / pas)")
     t = np.arange(1024) / 1024
     for j in range(3):
@@ -340,6 +340,39 @@ def figure_rankings() -> None:
         f"\\newcommand{{\\NbCoeffsPhoneme}}{{{p}}}\n")
 
 
+def table_grid() -> dict:
+    """Usage rule with the default grid vs a wider grid, same partitions (db4, all families)."""
+    wide = pd.read_csv(RES / "grid.csv")
+    wide = wide[wide.family == "ALL"]
+    out = {}
+    lines = [r"\begin{tabular}{@{}lccccc@{}}", r"\toprule",
+             r"Données & Grille & Erreur test & $\hat d$ médian & $\hat c$ le plus fréquent & $p$-valeur \\",
+             r"\midrule"]
+    sources = (("simulation", "simulation.csv", "simulation"), ("phoneme", "phoneme.csv", "phoneme"),
+               ("ecg200-raw", "ecg200.csv", "ECG200 (temps)"))
+    for setting, fname, lab in sources:
+        base = pd.read_csv(RES / fname)
+        base = base[(base.setting == setting) & (base.rule == "usage") & (base.family == "ALL")
+                    & (base.wavelet == "db4") & (base.n_outliers == 0)]
+        w = wide[wide.setting == setting]
+        both = base.set_index("rep").test_err.to_frame("base").join(w.set_index("rep").test_err.rename("wide"))
+        p = _pvalue(both.base.to_numpy(), both.wide.to_numpy())
+        for k, (df, glab) in enumerate(((base, r"$\{0{,}5;\dots;3\}$"), (w, r"$\{0{,}5;\dots;8\}$"))):
+            R = len(df)
+            mode = df.c.mode().iloc[0]
+            lines.append(f"{lab if k == 0 else ''} & {glab} & {_fr(df.test_err.mean())} "
+                         f"({_fr(df.test_err.std() / np.sqrt(R))}) & {int(df.d.median())} & "
+                         f"{_fr(mode, 1)} & {_pstr(p) if k == 0 else ''}" + r" \\")
+            out[(setting, k)] = dict(err=df.test_err.mean(), d=df.d.median(), c=mode,
+                                     cdist=df.c.value_counts().to_dict())
+        out[(setting, "p")] = p
+        if setting != "ecg200-raw":
+            lines.append(r"\addlinespace")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (TAB / "grille.tex").write_text("\n".join(lines) + "\n")
+    return out
+
+
 def main() -> None:
     TAB.mkdir(parents=True, exist_ok=True)
     FIG.mkdir(parents=True, exist_ok=True)
@@ -358,6 +391,8 @@ def main() -> None:
         vals["sample_size"] = sample_size()
     if (RES / "phoneme.csv").exists() and (RES / "simulation.csv").exists():
         dimension_boxplots()
+    if (RES / "grid.csv").exists():
+        vals["grid"] = table_grid()
     for k, v in vals.items():
         print(f"== {k}")
         for kk, vv in v.items():

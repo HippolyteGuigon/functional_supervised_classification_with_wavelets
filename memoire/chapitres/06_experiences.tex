@@ -1,0 +1,146 @@
+\chapter{Expériences numériques}\label{chap:experiences}
+
+\input{tables/classements_valeurs}
+
+Ce chapitre poursuit trois buts : reproduire les résultats empiriques de \citet{berlinet2008functional}, comparer la règle de l'énergie et la règle d'usage à seuil global, et vérifier sur des données les propriétés établies au \cref{chap:theorie}.
+
+\section{Protocole}\label{sec:protocole}
+
+Nous suivons le protocole de l'article, qui est aussi celui couvert par la théorie (\cref{sec:decoupage}). Pour chaque répétition, les données sont partagées aléatoirement, de façon stratifiée, en une séquence d'apprentissage de taille $n$, une séquence de validation de taille $m$ et une séquence de test. Le classement des coefficients n'utilise que la séquence d'apprentissage ; le triplet (seuil, dimension, règle) est choisi sur la séquence de validation par \eqref{eq:selection}, avec $d\le d_{\max}=64$ ; l'erreur est mesurée sur la séquence de test. Les deux règles sont évaluées sur les \emph{mêmes} partitions, et nous les comparons par un test des rangs signés de Wilcoxon apparié. Sauf mention contraire, nous faisons $R=100$ répétitions, comme l'article, et nous rapportons la moyenne de l'erreur de test avec son erreur standard entre parenthèses.
+
+La sélection est faite séparément dans chaque famille (W-NN, W-QDA, W-CART), comme dans les tableaux de l'article, et conjointement sur les trois familles (ligne « Toutes »). Pour la règle d'usage, $\Gamma=\{0{,}5;\,1;\,1{,}5;\,2;\,3\}$.
+
+\paragraph{Stabilité du classement.} Pour mesurer la variabilité de la représentation commune d'un échantillon à l'autre, nous calculons, pour chaque répétition, l'ensemble des dix premiers indices du classement (au seuil $c=1$ pour la règle d'usage), puis l'indice de Jaccard moyen entre toutes les paires de répétitions. Une valeur de $1$ signifie que toutes les partitions sélectionnent les mêmes dix coefficients.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{donnees.pdf}
+\caption{Les trois jeux de données. En haut : un log-périodogramme par classe de phonème ; quatre ECG de chaque classe dans le domaine temporel et dans le domaine spectral. En bas : trois courbes du modèle simulé.}
+\label{fig:donnees}
+\end{figure}
+
+\section{Données de parole : reproduction de l'article}\label{sec:exp-phoneme}
+
+Les données \emph{phoneme} \citep{hastie1995penalized} comportent $4509$ log-périodogrammes de longueur $256$, répartis en cinq classes de phonèmes (\cref{fig:donnees}). Comme dans l'article, $n=m=250$ et le test porte sur les $4009$ courbes restantes ; $J=8$. Conformément à la \cref{rem:phoneme-spectral}, les courbes sont utilisées telles quelles.
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/phoneme_bases}
+\caption{Données \emph{phoneme} : erreur de test moyenne sur $100$ partitions pour six bases de Daubechies. La ligne « Article » reprend le tableau~1 de \citet{berlinet2008functional}. En gras, la meilleure des deux règles (à $10^{-3}$ près).}
+\label{tab:phoneme-bases}
+\end{table}
+
+\paragraph{Reproduction.} Le \cref{tab:phoneme-bases} reproduit le tableau~1 de l'article. Pour W-NN et W-QDA, nos erreurs avec la règle de l'énergie coïncident avec les valeurs publiées à $0{,}005$ près, pour toutes les bases, et l'on retrouve la dégradation de W-QDA lorsque le nombre de moments nuls augmente. Pour W-CART, les écarts atteignent $0{,}02$ dans les deux sens ; l'article utilise la bibliothèque R \texttt{tree}, dont l'algorithme de construction et d'élagage diffère de celui de scikit-learn.
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/phoneme_resume}
+\caption{Données \emph{phoneme}, base \texttt{db4}. Erreur de test (erreur standard), dimension sélectionnée, stabilité du classement entre partitions, écart moyen apparié (usage moins énergie) et $p$-valeur du test de Wilcoxon apparié.}
+\label{tab:phoneme-resume}
+\end{table}
+
+\paragraph{Énergie contre usage.} Sur ces données, les deux règles sont indiscernables (\cref{tab:phoneme-resume}) : les écarts appariés sont inférieurs à $0{,}004$ et aucun n'est significatif au niveau $5\,\%$. Les dimensions sélectionnées sont comparables. Ce résultat est attendu : les log-périodogrammes de parole sont des courbes régulières, d'amplitudes comparables et sans valeur aberrante marquée, et les deux critères désignent essentiellement les mêmes coefficients grossiers (\cref{fig:classements}).
+
+La stabilité du classement est légèrement plus faible pour la règle d'usage. Ce n'est pas une contradiction avec le \cref{thm:stabilite} : la \cref{fig:classements} montre qu'une dizaine de coefficients sont utilisés par la quasi-totalité des courbes ($\hphi_j\approx1$). Les dix premiers rangs tombent donc dans un plateau où l'écart $\gamma_{10}$ est presque nul, régime dans lequel le théorème ne garantit rien et où de petites fluctuations permutent les indices.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{classements.pdf}
+\caption{Données \emph{phoneme} ($250$ courbes, \texttt{db4}). Scores triés des deux règles, avant (trait plein) et après (tirets) l'ajout d'un pic à une seule courbe. Le pic modifie tout le profil d'énergie ; le profil d'usage est inchangé. Indice de Jaccard entre les dix premiers indices avant et après contamination : \JacEnergieUne{} pour l'énergie, \JacUsageUne{} pour l'usage.}
+\label{fig:classements}
+\end{figure}
+
+\section{Données simulées}\label{sec:exp-simulation}
+
+Nous reprenons le modèle de la section 3.2 de l'article :
+\[
+  X(t)=\sin(F^1\pi t)\,f_{\mu,\sigma}(t)+\sin(F^2\pi t)\,f_{1-\mu,\sigma}(t)+\varepsilon_t ,
+\]
+où $f_{\mu,\sigma}$ est la densité gaussienne de moyenne $\mu$ et de variance $\sigma^2$, $F^1,F^2\sim\mathcal U[50,150]$, $\mu\sim\mathcal U[0{,}1;\,0{,}4]$, $\sigma^2\sim\mathcal U[0;\,0{,}005]$ et les $\varepsilon_t$ sont i.i.d. $\mathcal N(0,0{,}5^2)$. L'étiquette vaut $Y=0$ si $\mu\le0{,}25$ (bouffées éloignées) et $Y=1$ sinon. Les courbes sont échantillonnées en $1024$ points, $J=10$, $n=m=50$ et le test porte sur $500$ courbes indépendantes.
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/simulation_bases}
+\caption{Données simulées : erreur de test moyenne sur $100$ répétitions. La ligne « Article » reprend le tableau~3 de \citet{berlinet2008functional}.}
+\label{tab:simulation-bases}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/simulation_resume}
+\caption{Données simulées, base \texttt{db4}. Mêmes colonnes que le \cref{tab:phoneme-resume}.}
+\label{tab:simulation-resume}
+\end{table}
+
+\paragraph{Reproduction.} Avec la règle de l'énergie, nous retrouvons les conclusions de l'article (\cref{tab:simulation-bases}) : W-QDA est nettement la meilleure famille, avec une erreur d'environ $0{,}075$ contre $0{,}08$ dans l'article, et les résultats sont robustes au choix de la base. Nos erreurs pour W-CART sont plus faibles que celles de l'article, pour la même raison que précédemment.
+
+\paragraph{Énergie contre usage.} Ici, la règle d'usage est \emph{moins bonne} en prédiction : l'écart est d'environ $+0{,}02$ pour W-QDA et pour la sélection conjointe, significatif ($p<10^{-3}$) (\cref{tab:simulation-resume}). L'explication la plus plausible tient à la structure du modèle. L'information discriminante est la \emph{position} des deux bouffées, qui varie d'une courbe à l'autre ; les coefficients fins qui la portent ne sont donc utilisés que par une petite fraction des courbes. Par construction, la règle d'usage favorise au contraire les coefficients utilisés par beaucoup de courbes, et le bruit, présent partout, en fait partie. La règle de l'énergie, elle, est attirée par les courbes à bouffées très concentrées (petit $\sigma$), dont les grands coefficients sont précisément ceux qui localisent les bouffées. Ce qui est un défaut de robustesse devient ici un avantage.
+
+La règle d'usage produit en revanche une représentation nettement plus stable d'une répétition à l'autre (indice de Jaccard $0{,}32$ contre $0{,}11$). Enfin, le seuil sélectionné est souvent le plus grand de la grille, $c=3$ ; nous étudions l'effet d'une grille plus large au \cref{sec:exp-grille}.
+
+Cet exemple illustre la contrepartie annoncée au \cref{chap:methode} : la règle d'usage cherche une représentation \emph{commune}, qui décrit ce que partagent les courbes, et non la représentation la plus discriminante. Lorsque la classe dépend d'un détail rare et mobile, les deux objectifs divergent.
+
+\section{ECG200 : domaine temporel et domaine spectral}\label{sec:exp-ecg}
+
+Le jeu ECG200 \citep{olszewski2001generalized,dau2019ucr} contient $200$ électrocardiogrammes de longueur $96$, répartis en deux classes (battement normal ou infarctus du myocarde). Contrairement aux données de parole, ce sont de vraies séries temporelles : on peut comparer le domaine temporel au domaine spectral obtenu par le log-périodogramme (\cref{sec:periodogramme}), qui comporte $48$ ordonnées. Nous regroupons les deux échantillons d'origine et, à chaque répétition, nous tirons $n=m=50$ courbes, le test portant sur les $100$ restantes.
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/ecg200}
+\caption{ECG200, base \texttt{db4} : erreur de test (erreur standard) sur $100$ répétitions, dimension sélectionnée et $p$-valeur du test de Wilcoxon apparié entre les deux règles.}
+\label{tab:ecg}
+\end{table}
+
+\paragraph{Domaine.} Le domaine temporel est nettement meilleur : pour la sélection conjointe, l'erreur passe d'environ $0{,}17$ dans le domaine temporel à $0{,}21$ dans le domaine spectral, quelle que soit la règle (\cref{tab:ecg}). C'est la conséquence attendue de l'invariance du périodogramme par translation (\cref{sec:periodogramme}) : ce qui distingue un battement pathologique est la forme et la position de certaines ondes, information de phase que le périodogramme élimine. Pour les phonèmes, au contraire, l'information utile est la répartition de l'énergie selon les fréquences, et le domaine spectral est le bon. Le choix du domaine relève donc de la connaissance du signal, et non d'une règle générale.
+
+\paragraph{Règles.} Dans le domaine temporel, les deux règles sont équivalentes (aucune différence significative). Dans le domaine spectral, la règle d'usage est significativement meilleure avec W-QDA (erreur $0{,}204$ contre $0{,}221$, $p<10^{-3}$) et sélectionne des dimensions plus faibles. Un périodogramme est une estimation bruitée (\cref{prop:periodogramme}) dont quelques ordonnées peuvent être très grandes ; ce contexte est favorable à une règle robuste.
+
+\section{Robustesse à des courbes aberrantes}\label{sec:exp-contamination}
+
+Pour vérifier les \cref{prop:robustesse,prop:rupture-energie}, nous reprenons le modèle simulé et nous ajoutons un pic étroit (gaussienne d'écart type $2$ pas, de hauteur $50$ fois le maximum absolu de l'échantillon, à une position uniforme) à $k\in\{0,1,3,5\}$ courbes de la séquence d'apprentissage, sur $n=50$. Les séquences de validation et de test ne sont pas modifiées, et les étiquettes non plus : ce sont des artefacts d'enregistrement. Pour chaque répétition, nous comparons les dix premiers indices du classement avec ceux obtenus sur l'échantillon propre, sur les mêmes données.
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/contamination}
+\caption{Contamination de la séquence d'apprentissage ($100$ répétitions, \texttt{db4}, sélection conjointe). Jaccard : recouvrement moyen des dix premiers indices avec ceux de l'échantillon propre.}
+\label{tab:contamination}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{contamination.pdf}
+\caption{Effet de la contamination. À gauche : recouvrement des dix premiers indices avec ceux de l'échantillon propre. À droite : erreur de test (barres : $\pm$ une erreur standard).}
+\label{fig:contamination}
+\end{figure}
+
+Le résultat est sans ambiguïté (\cref{tab:contamination,fig:contamination}). \emph{Une seule} courbe contaminée sur $50$ suffit à renouveler presque entièrement les dix premiers indices de la règle de l'énergie (Jaccard $0{,}02$) : les coefficients fins qui portent le pic passent en tête, exactement comme dans la preuve de la \cref{prop:rupture-energie}. L'erreur de test passe de $0{,}081$ à $0{,}130$ (test de Wilcoxon apparié, $p<10^{-10}$) et la dimension sélectionnée médiane de $8$ à $34$ : il faut aller chercher les coefficients utiles plus loin dans le classement. La règle d'usage n'est presque pas affectée : le recouvrement reste de $0{,}89$ avec une courbe contaminée et de $0{,}77$ avec cinq, et son erreur ne change pas de façon significative ($0{,}101$ sans contamination, $0{,}104$ avec cinq courbes, $p=0{,}24$). Dès qu'une seule courbe est contaminée, la règle d'usage devient significativement meilleure que la règle de l'énergie (écart de $-0{,}031$ pour une courbe, $p<10^{-6}$).
+
+La \cref{prop:robustesse} explique ce comportement : chaque courbe contaminée déplace chaque fréquence d'utilisation d'au plus $1/n=0{,}02$, et le pic, qui concentre l'énergie de la courbe contaminée sur quelques coefficients, ne peut « voter » que pour un petit nombre d'indices (\cref{prop:proprietes-usage}\,(ii)).
+
+\section{Comportement quand la taille d'échantillon augmente}\label{sec:exp-taille}
+
+Le \cref{cor:consistance-usage} affirme que la règle d'usage conduit, comme la règle de l'énergie, à une procédure consistante. Nous l'illustrons sur le modèle simulé, avec $n=m\in\{25,50,100,200,400\}$, $500$ courbes de test et $100$ répétitions.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{taille_echantillon.pdf}
+\caption{Modèle simulé : erreur de test (à gauche, $\pm$ une erreur standard) et dimension sélectionnée médiane (à droite) en fonction de la taille des séquences d'apprentissage et de validation.}
+\label{fig:taille}
+\end{figure}
+
+Les deux erreurs décroissent vers $0$ et l'écart entre les règles se referme (\cref{fig:taille}) : $0{,}159$ contre $0{,}143$ pour $n=25$, puis $0{,}030$ contre $0{,}028$ pour $n=200$ et $0{,}018$ pour les deux règles pour $n=400$. La dimension sélectionnée croît avec $n$, conformément à l'arbitrage décrit par le \cref{thm:oracle} : avec plus de données, les règles de $\cD_n^{(d)}$ apprennent bien en dimension plus grande, et la sélection va chercher les coefficients plus fins. L'avantage de la règle de l'énergie observé au \cref{sec:exp-simulation} est donc un effet de petit échantillon : il porte sur la vitesse, pas sur la limite.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{dimensions.pdf}
+\caption{Distribution de la dimension sélectionnée $\hat d$ sur $100$ répétitions (\texttt{db4}), pour chaque famille et chaque règle.}
+\label{fig:dimensions}
+\end{figure}
+
+%%%GRILLE%%%

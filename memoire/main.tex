@@ -1,10 +1,15 @@
 \documentclass[11pt,a4paper,twoside,openright]{report}
 
 % ── Langue et encodage ───────────────────────────────────────────────────────
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\else
+  \usepackage{fontspec}
+\fi
 \usepackage[french]{babel}
-\usepackage{lmodern}
 \usepackage{microtype}
 
 % ── Mise en page ─────────────────────────────────────────────────────────────
@@ -18,6 +23,7 @@
 \fancyhead[RE]{\small\nouppercase{\leftmark}}
 \fancyhead[LO]{\small\nouppercase{\rightmark}}
 \renewcommand{\headrulewidth}{0.3pt}
+\setlength{\headheight}{14pt}
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
 
 % ── Mathématiques ────────────────────────────────────────────────────────────
@@ -43,8 +49,10 @@
 \definecolor{bleuamu}{HTML}{1F3A68}
 \usepackage[natbib=true,style=authoryear,maxcitenames=2,maxbibnames=10,backend=bibtex,uniquename=false,uniquelist=false]{biblatex}
 \addbibresource{references.bib}
+\DefineBibliographyExtras{french}{\restorecommand\mkbibnamefamily}
 \usepackage{csquotes}
-\usepackage[colorlinks=true,linkcolor=bleuamu,citecolor=bleuamu,urlcolor=bleuamu]{hyperref}
+\usepackage{xurl}
+\usepackage[colorlinks=true,linkcolor=bleuamu,citecolor=bleuamu,urlcolor=bleuamu,hypertexnames=false]{hyperref}
 \usepackage[capitalise,noabbrev,nameinlink]{cleveref}
 \crefname{theoreme}{Théorème}{Théorèmes}
 \crefname{proposition}{Proposition}{Propositions}

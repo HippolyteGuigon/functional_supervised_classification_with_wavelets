@@ -1,0 +1,49 @@
+\chapter{Implémentation et reproductibilité}\label{chap:implementation}
+
+\section{Organisation du code}
+
+Le code est écrit en Python et s'appuie sur PyWavelets \citep{lee2019pywavelets} pour les transformées en ondelettes et sur scikit-learn \citep{pedregosa2011scikit} pour les classifieurs. Il est organisé en modules :
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{4.6cm}p{9.6cm}@{}}
+\toprule
+Module & Rôle \\
+\midrule
+\texttt{coeffient\_compute.py} & Transformée en ondelettes périodisée orthogonale (\texttt{coeff\_matrix}, \texttt{dyadic\_level}) et log-périodogramme (\texttt{to\_periodogram}). \\
+\texttt{representation.py} & Règles de représentation commune : énergie, fréquence d'utilisation, normalisation des courbes (\texttt{normalize\_rows}), seuil global (\texttt{significance\_mask}, règle \texttt{"global"}). \\
+\texttt{benchmark.py} & Protocole de découpage apprentissage/validation/test répété, pour tous les réglages du \cref{chap:experiences}. \\
+\texttt{simulation.py} & Modèle simulé de \citet[section 3.2]{berlinet2008functional} et contamination par des pics. \\
+\texttt{report.py} & Production des tableaux et figures du mémoire à partir des résultats. \\
+\texttt{model.py} & Pipeline interactif avec sélection par validation croisée à $K$ blocs, piloté par \texttt{configs/config.yaml}. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Choix d'implémentation}
+
+\begin{itemize}
+  \item \textbf{Transformée orthogonale.} \texttt{pywt.wavedec} est appelée avec \texttt{mode="periodization"} et un nombre de niveaux égal à la plus grande puissance de $2$ divisant la longueur du signal (\cref{prop:dwt-orthogonale,rem:mode-symmetric}). Un test vérifie la propriété de Parseval pour \texttt{db1}, \texttt{db4} et \texttt{db10} et des longueurs $96$, $256$ et $1024$.
+  \item \textbf{Normalisation.} Elle n'est appliquée qu'au calcul des fréquences d'utilisation ; les classifieurs reçoivent les coefficients d'origine (\cref{prop:normalisation-perte}).
+  \item \textbf{Départage des ex æquo.} Tri stable par score décroissant : à score égal, l'indice le plus grossier passe en premier.
+  \item \textbf{Classifieurs.} W-NN : $k\in\{1,3,5,7,9,15,25\}$ ; W-QDA : analyse discriminante quadratique sans régularisation, pour $d$ strictement inférieur à l'effectif de la plus petite classe d'apprentissage, comme dans l'article ; W-CART : arbre de décision de scikit-learn avec ses paramètres par défaut.
+  \item \textbf{Sélection.} Erreur de validation minimale, puis plus petite dimension en cas d'égalité.
+  \item \textbf{Aléa.} La répétition $r$ utilise la graine $1000+r$ pour le découpage, la simulation et la contamination. Les deux règles sont évaluées sur les mêmes partitions, ce qui permet des comparaisons appariées.
+\end{itemize}
+
+\section{Tests}
+
+Le fichier \texttt{tests/test\_representation.py} contient 22 tests, qui passent tous. Ils vérifient notamment l'orthogonalité de la transformée, la définition du seuil global, l'invariance par changement d'échelle (\cref{prop:proprietes-usage}), la borne d'influence $1/n$ (\cref{prop:robustesse}), et l'exécution de bout en bout du pipeline.
+
+\section{Reproduire les résultats}
+
+Depuis la racine du dépôt :
+\begin{verbatim}
+mamba env create -f environment.yml
+conda activate functional_supervised_classification_environment
+pip install -e .
+python tests/test_representation.py
+python -m functional_supervised_classification.benchmark all --reps 100
+python -m functional_supervised_classification.report
+\end{verbatim}
+La deuxième commande écrit les résultats bruts dans \texttt{results/} ; la troisième produit les fichiers de \texttt{memoire/tables/} et \texttt{memoire/figures/} inclus dans ce document.

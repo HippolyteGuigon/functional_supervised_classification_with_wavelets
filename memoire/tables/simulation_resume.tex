@@ -1,0 +1,17 @@
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+Famille & Règle & Erreur test & $\hat d$ médian & Stabilité top-10 & Écart & $p$-valeur \\
+\midrule
+\multirow{2}{*}{W-NN} & Énergie & 0{,}141 (0{,}003) & 8 & 0{,}11 & \multirow{2}{*}{$+0{,}010$} & \multirow{2}{*}{0{,}054} \\
+ & Usage & 0{,}151 (0{,}004) & 10 & 0{,}32 &  &  \\
+\addlinespace
+\multirow{2}{*}{W-QDA} & Énergie & 0{,}073 (0{,}003) & 8 & 0{,}11 & \multirow{2}{*}{$+0{,}019$} & \multirow{2}{*}{$<10^{-3}$} \\
+ & Usage & 0{,}092 (0{,}004) & 9 & 0{,}32 &  &  \\
+\addlinespace
+\multirow{2}{*}{W-CART} & Énergie & 0{,}132 (0{,}003) & 16 & 0{,}11 & \multirow{2}{*}{$-0{,}006$} & \multirow{2}{*}{0{,}291} \\
+ & Usage & 0{,}126 (0{,}003) & 15 & 0{,}32 &  &  \\
+\addlinespace
+\multirow{2}{*}{Toutes} & Énergie & 0{,}081 (0{,}004) & 8 & 0{,}11 & \multirow{2}{*}{$+0{,}020$} & \multirow{2}{*}{$<10^{-3}$} \\
+ & Usage & 0{,}101 (0{,}004) & 11 & 0{,}32 &  &  \\
+\bottomrule
+\end{tabular}

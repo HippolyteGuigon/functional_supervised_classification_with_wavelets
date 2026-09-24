@@ -94,16 +94,23 @@ into the "common" representation even if no other curve uses it.
 
 This repository adds an alternative rule (requested by the thesis supervisor):
 rank the time-frequency features $(j,k)$ by **how frequently they are used**
-across the sample. With a per-signal significance threshold $\tau_i$,
+across the sample. Every curve is first rescaled to unit energy,
+$\tilde X_i = X_i / \lVert X_i \rVert$ (with the orthogonal periodized DWT this is
+the $L^2$ norm of the curve), and a single **global** threshold
+$\tau = c/\sqrt{p}$ is applied to all curves:
 
-$$s_{i,j,k} = \mathbf{1}\bigl[\,|X_{i,j,k}| > \tau_i\,\bigr],
+$$s_{i,j,k} = \mathbf{1}\bigl[\,|\tilde X_{i,j,k}| > c/\sqrt{p}\,\bigr],
 \qquad
 \varphi_{j,k} = \frac{1}{n}\sum_{i=1}^{n} s_{i,j,k},
 \qquad
 S_d = \text{top-}d \ \text{of}\ \varphi_{j,k}$$
 
-Three threshold rules are implemented (`significance.rule` in
-`configs/config.yaml`): `top_m` (the $m$ largest coefficients of each signal),
+A curve "uses" $\psi_{j,k}$ when that coefficient carries more than $c^2$ times the
+share of energy it would get if the curve's energy were spread evenly over the $p$
+coefficients. This `global` rule is the default, as agreed with the supervisor;
+the normalisation is used only to *select* the indices, the classifiers receive
+the original coefficients. Earlier per-signal rules remain available
+(`significance.rule`): `top_m` (the $m$ largest coefficients of each signal),
 `quantile` (global quantile $q$ of $|X|$) and `universal` (Donoho–Johnstone
 $\tau = c\,\hat\sigma\sqrt{2\ln p}$). A class-conditional variant
 (`usage_discriminant`) ranks by the cross-class gap
@@ -231,7 +238,7 @@ input_domain: "both"     # "raw" | "spectrum" | "both"  (spectrum = periodogram 
 
 selection_rule: "usage"  # "energy" (eq. 2.4) | "usage" (eq. 2.4') | "usage_discriminant"
 significance:
-  rule: "top_m"          # "top_m" | "quantile" | "universal"  (used by the "usage" rules only)
+  rule: "global"         # "global" | "top_m" | "quantile" | "universal"  (used by the "usage" rules only)
   param: null            # null -> tuned by cross-validation; a concrete value pins it
 cv_folds: 5              # folds for the joint (threshold, d, classifier) selection
 d_max: 50                # upper bound on the dimension search
@@ -261,6 +268,29 @@ This runs the full classification pipeline (`functional_supervised_classificatio
 $$Z_i = \bigl(v_1^\top X_i^{(d)},\; v_2^\top X_i^{(d)}\bigr) \in \mathbb{R}^2$$
 
 i.e. the 2D subspace capturing the maximal share of variance among the $d$ retained coefficients.
+
+## Benchmark and thesis figures
+
+The experiments of the thesis follow the data-splitting protocol of the paper
+(training / validation / test, repeated partitions) and live in
+`functional_supervised_classification/benchmark.py`:
+
+```bash
+python -m functional_supervised_classification.benchmark all --reps 100   # writes results/*.csv
+python -m functional_supervised_classification.report                     # writes memoire/tables and memoire/figures
+```
+
+Experiments: `phoneme` and `simulation` (Tables 1 and 3 of the paper, six
+Daubechies bases, energy vs usage), `ecg200` (time domain vs periodogram),
+`contamination` (spikes added to training curves), `sample_size` (error as
+$n = m$ grows) and `grid` (sensitivity to the threshold grid). The phoneme curves
+are already log-periodograms and are used as provided.
+
+The DWT uses `mode="periodization"` at the deepest dyadic level, which makes it an
+orthogonal transform (Parseval holds exactly); PyWavelets' default `symmetric`
+mode inflates the coefficient energy by ~25 % for `db4` on ECG200.
+
+The LaTeX sources of the thesis are in `memoire/` (`main.tex`).
 
 ## Exploring wavelet coefficients and domains
 
@@ -292,7 +322,12 @@ functional_supervised_classification/
 │   ├── coeffient_compute.py    # DWT coefficient matrix + periodogram feature engineering
 │   ├── representation.py       # common-representation rules: energy / usage frequency (eq. 2.4')
 │   ├── data_visualisation.py   # cluster view, usage-frequency plot, raw-vs-spectrum plots
-│   └── model.py                # full classification pipeline (eq. 2.3–2.5, CV model selection)
+│   ├── model.py                # full classification pipeline (eq. 2.3–2.5, CV model selection)
+│   ├── benchmark.py            # repeated train/validation/test benchmark (protocol of the paper)
+│   ├── simulation.py           # simulated curves of Section 3.2 + outlier contamination
+│   └── report.py               # tables and figures of the thesis
+├── memoire/                    # LaTeX sources of the thesis
+├── results/                    # benchmark outputs (CSV)
 ├── tests/
 │   └── test_representation.py  # unit tests + end-to-end pipeline smoke test
 ├── environment.yml
