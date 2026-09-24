@@ -1,10 +1,11 @@
 dataset: "phoneme"       # "ecg200" | "phoneme"
-input_domain: "both"     # "raw" | "spectrum" | "both"  (spectrum = periodogram feature engineering)
+input_domain: "both"     # "raw" | "spectrum" | "both"  (spectrum = periodogram feature engineering; phoneme is always "spectrum", used as provided)
 
 # --- Common representation rule  (eq. 2.4 / 2.4') ---
 selection_rule: "usage"  # "energy" (eq. 2.4) | "usage" (eq. 2.4') | "usage_discriminant"
 significance:
-  rule: "top_m"          # "top_m" | "quantile" | "universal"  (used by the "usage" rules only)
+  rule: "global"         # "global" (tau = c / sqrt(p) on unit-energy curves) | "top_m" | "quantile" | "universal"
   param: null            # null -> tuned by cross-validation; a concrete value pins it
+normalize: true          # usage rules: rescale every curve to unit energy before thresholding
 cv_folds: 5              # folds for the joint (threshold, d, classifier) selection
 d_max: 50                # upper bound on the dimension search

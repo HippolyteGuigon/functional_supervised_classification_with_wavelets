@@ -21,9 +21,16 @@ rank the time-frequency features ``(j, k)`` by *how frequently they are used*
 across the sample, i.e. how often the corresponding coefficient is significant
 in an individual signal.
 
-    s_{i,j,k} = 1[ |X_{i,j,k}| > tau_i ]        significance indicator
+    s_{i,j,k} = 1[ |X~_{i,j,k}| > tau ]         significance indicator
     phi_{j,k} = (1 / n) sum_i s_{i,j,k}         usage frequency        (eq. 2.4')
     S_d       = the d indices of largest phi_{j,k}
+
+where ``X~_i = X_i / ||X_i||`` is the curve rescaled to unit energy, so that a
+single global threshold ``tau`` means the same thing for every curve. The
+default rule (``"global"``, retained with the thesis supervisor) takes
+``tau = c / sqrt(p)``: a coefficient is "used" by a curve when it carries more
+than ``c^2`` times the share of energy it would get if the curve's energy were
+spread evenly over the ``p`` coefficients.
 
 A class-conditional variant ranks by how *differently* a feature is used from
 one class to another, targeting discriminative power directly.
@@ -35,12 +42,27 @@ cross-validation in :mod:`functional_supervised_classification.model`.
 import numpy as np
 
 SELECTION_RULES = ("energy", "usage", "usage_discriminant")
-SIGNIFICANCE_RULES = ("top_m", "quantile", "universal")
+SIGNIFICANCE_RULES = ("global", "top_m", "quantile", "universal")
 
 # 1 / Phi^{-1}(0.75): converts a median-absolute-deviation into a Gaussian sigma.
 _MAD_TO_SIGMA = 1.0 / 0.6744897501960817
 
-_DEFAULT_PARAM = {"top_m": 20, "quantile": 0.9, "universal": 1.0}
+_DEFAULT_PARAM = {"global": 1.0, "top_m": 20, "quantile": 0.9, "universal": 1.0}
+
+
+def normalize_rows(C: np.ndarray) -> np.ndarray:
+    """
+    Scale every curve to unit norm: ``X_i / ||X_i||``.
+
+    For an orthogonal DWT (see :func:`coeff_matrix`) normalising the coefficient
+    vector is the same as normalising the discretised curve in ``L^2``, so all
+    curves share the same total energy ``sum_j X_ij^2 = 1``. A global
+    significance threshold then means the same thing for every curve. Null rows
+    are left unchanged.
+    """
+    C = np.asarray(C, dtype=float)
+    norms = np.linalg.norm(C, axis=1, keepdims=True)
+    return C / np.where(norms > 0.0, norms, 1.0)
 
 
 def significance_mask(C: np.ndarray, rule: str = "top_m", param=None) -> np.ndarray:
@@ -54,6 +76,9 @@ def significance_mask(C: np.ndarray, rule: str = "top_m", param=None) -> np.ndar
         DWT coefficient matrix, shape ``(n, p)`` (one row per signal), as
         returned by :func:`coeffient_compute.coeff_matrix`.
     rule:
+        - ``"global"``    : one threshold ``tau = param / sqrt(p)`` shared by all
+          curves (``param`` a positive multiplier, default 1.0). Meant for
+          rows normalised by :func:`normalize_rows`.
         - ``"top_m"``     : the ``param`` largest-magnitude coefficients of each
           signal are flagged (``param`` an int, default 20).
         - ``"quantile"``  : coefficients strictly above the global ``param``
@@ -78,6 +103,12 @@ def significance_mask(C: np.ndarray, rule: str = "top_m", param=None) -> np.ndar
     A = np.abs(C)
     if param is None:
         param = _DEFAULT_PARAM[rule]
+
+    if rule == "global":
+        c = float(param)
+        if c <= 0.0:
+            raise ValueError(f"global parameter must be > 0; got {c}")
+        return A > c / np.sqrt(p)
 
     if rule == "top_m":
         m = int(param)
@@ -152,8 +183,9 @@ def feature_ranking(
     C: np.ndarray,
     y=None,
     selection_rule: str = "usage",
-    significance_rule: str = "top_m",
+    significance_rule: str = "global",
     significance_param=None,
+    normalize: bool = True,
 ) -> np.ndarray:
     """
     Order the columns of ``C`` (the wavelet basis functions) from most to least
@@ -172,6 +204,11 @@ def feature_ranking(
         - ``"usage_discriminant"`` : rank by the cross-class usage gap.
     significance_rule, significance_param:
         Passed to :func:`significance_mask` for the two "usage" rules.
+    normalize:
+        For the two "usage" rules, rescale every curve to unit energy
+        (:func:`normalize_rows`) before thresholding. Only the ranking uses the
+        normalised curves; the classifier still receives the original
+        coefficients. Ignored by ``"energy"``, which follows eq. 2.4 as is.
 
     Returns
     -------
@@ -187,7 +224,8 @@ def feature_ranking(
     if selection_rule == "energy":
         score = energy(C)
     else:
-        mask = significance_mask(C, rule=significance_rule, param=significance_param)
+        C_sel = normalize_rows(C) if normalize else C
+        mask = significance_mask(C_sel, rule=significance_rule, param=significance_param)
         if selection_rule == "usage":
             score = usage_frequency(mask)
         else:  # usage_discriminant

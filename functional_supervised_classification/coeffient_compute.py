@@ -16,6 +16,8 @@ This vector is the input to the two subsequent steps of the pipeline:
   - joint selection of dimension d and classifier g  (eq. 2.5)
 """
 
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pywt
@@ -25,13 +27,29 @@ from functional_supervised_classification.data_loading import load_ecg200 as loa
 
 
 WAVELET = "db4"
-J       = 12
+J       = None          # None -> deepest dyadic level allowed by the signal length
+MODE    = "periodization"
+
+
+def dyadic_level(T: int) -> int:
+    """
+    Largest ``L`` such that ``2^L`` divides ``T``: the deepest level at which the
+    periodized DWT stays an orthogonal change of basis of ``R^T``
+    (``T = 96 = 2^5 * 3 -> 5``, ``T = 256 -> 8``, ``T = 1024 -> 10``).
+    """
+    if T < 2:
+        raise ValueError(f"signal length must be >= 2; got {T}")
+    L = 0
+    while T % (2 ** (L + 1)) == 0:
+        L += 1
+    return L
 
 
 def coeff_matrix(
     signals: np.ndarray,
     wavelet: str = WAVELET,
-    level: int = J,
+    level: int | None = J,
+    mode: str = MODE,
 ) -> np.ndarray:
     """
     Compute the full DWT coefficient matrix for a set of signals.
@@ -44,8 +62,13 @@ def coeff_matrix(
     matching the reindexed basis {phi_{0,0}, psi_{0,0}, psi_{1,0}, ...}
     from eq. (2.3) of the paper.
 
-    The signals are NOT normalized: coefficient magnitudes must preserve the
-    true energy in each basis direction, as required by eq. (2.4).
+    With ``mode="periodization"`` and a dyadic level (the defaults), the
+    transform is an orthogonal matrix of ``R^T``: there are exactly ``T``
+    coefficients and Parseval holds, ``sum_j X_ij^2 = sum_t x_i(t)^2``. The
+    PyWavelets default ``mode="symmetric"`` pads the signal and returns more
+    than ``T`` coefficients whose energy exceeds that of the signal (by ~25 %
+    for db4 on ECG200), which breaks the energy interpretation of eq. (2.4) and
+    the normalisation used by the usage rule.
 
     Parameters
     ----------
@@ -54,16 +77,25 @@ def coeff_matrix(
     wavelet:
         PyWavelets wavelet identifier.
     level:
-        Maximum resolution level J.
+        Number of decomposition levels; ``None`` uses :func:`dyadic_level`.
+    mode:
+        PyWavelets signal extension mode.
 
     Returns
     -------
     np.ndarray
-        DWT coefficient matrix, shape (n, N_coeffs) with N_coeffs ≈ T.
+        DWT coefficient matrix, shape (n, T) in periodization mode.
     """
-    return np.stack([
-        np.concatenate(pywt.wavedec(s, wavelet, level=level)) for s in signals
-    ])
+    signals = np.asarray(signals, dtype=float)
+    if level is None:
+        level = dyadic_level(signals.shape[1])
+    with warnings.catch_warnings():
+        # periodization is exact at every dyadic level; PyWavelets still warns
+        # that deep levels "experience boundary effects"
+        warnings.filterwarnings("ignore", message="Level value of")
+        return np.stack([
+            np.concatenate(pywt.wavedec(s, wavelet, mode=mode, level=level)) for s in signals
+        ])
 
 
 def to_periodogram(
@@ -141,7 +173,7 @@ def explore():
     axes[1].stem(X_coeffs[0], markerfmt="C1o", linefmt="C1-", basefmt="k-")
     axes[1].set_title(
         r"DWT coefficient vector  $X_i = (X_{i1}, \ldots, X_{i,2^J})$"
-        f"  —  wavelet: {WAVELET}, level J={J}"
+        f"  —  wavelet: {WAVELET}, level J={dyadic_level(signals.shape[1])}"
     )
     axes[1].set_xlabel("Coefficient index $j$")
     axes[1].set_ylabel("$X_{ij}$")

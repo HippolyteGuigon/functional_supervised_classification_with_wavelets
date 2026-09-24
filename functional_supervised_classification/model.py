@@ -19,6 +19,9 @@ Steps
 
 The input representation is chosen in configs/config.yaml via ``input_domain``:
 ``raw`` (time domain), ``spectrum`` (periodogram) or ``both`` to compare them.
+Datasets listed in ``SPECTRAL_DATASETS`` (phoneme) are already log-periodograms:
+their only domain is ``spectrum`` and the data are used as provided, without
+applying ``to_periodogram`` a second time.
 """
 
 import warnings
@@ -50,8 +53,9 @@ DOMAIN  = CFG.get("input_domain", "raw")
 
 SELECTION_RULE = CFG.get("selection_rule", "energy")
 _SIG           = CFG.get("significance") or {}
-SIG_RULE       = _SIG.get("rule", "top_m")
+SIG_RULE       = _SIG.get("rule", "global")
 SIG_PARAM_CFG  = _SIG.get("param", None)          # None -> cross-validate a grid
+NORMALIZE      = bool(CFG.get("normalize", True)) # usage rules: unit-energy curves
 CV_FOLDS       = int(CFG.get("cv_folds", 5))
 D_MAX          = int(CFG.get("d_max", 50))        # W-QDA fails for large d
 
@@ -59,6 +63,9 @@ assert DATASET in ["phoneme", "ecg200"], f"Dataset {DATASET} not supported. Choo
 assert DOMAIN in ["raw", "spectrum", "both"], f"input_domain {DOMAIN} not supported. Choose 'raw', 'spectrum' or 'both'."
 assert SELECTION_RULE in SELECTION_RULES, f"selection_rule {SELECTION_RULE} not in {SELECTION_RULES}."
 assert SIG_RULE in SIGNIFICANCE_RULES, f"significance.rule {SIG_RULE} not in {SIGNIFICANCE_RULES}."
+
+# datasets whose curves are already (log-)periodograms
+SPECTRAL_DATASETS = {"phoneme"}
 
 # ── Parameters ────────────────────────────────────────────────────────────────
 
@@ -76,6 +83,7 @@ TRANSFORMS = {"raw": lambda s: s, "spectrum": to_periodogram}
 # "usage" rules; "energy" ignores the threshold, hence a single ``None``.
 PARAM_GRID = {
     "energy"   : [None],
+    "global"   : [0.5, 1.0, 1.5, 2.0, 3.0],
     "top_m"    : [8, 16, 32, 64],
     "quantile" : [0.80, 0.90, 0.95],
     "universal": [0.7, 1.0, 1.3],
@@ -114,7 +122,8 @@ def run(domain: str) -> None:
     Returns:
         None
     """
-    tf = TRANSFORMS[domain]
+    # spectral datasets are used as provided: no second periodogram
+    tf = (lambda s: s) if DATASET in SPECTRAL_DATASETS else TRANSFORMS[domain]
     C_train = coeff_matrix(tf(S_train))
     C_test  = coeff_matrix(tf(S_test))
     d_hi    = min(D_MAX, C_train.shape[1])
@@ -133,6 +142,7 @@ def run(domain: str) -> None:
                 C_train[tr_idx], y_train[tr_idx],
                 selection_rule=SELECTION_RULE,
                 significance_rule=SIG_RULE, significance_param=param,
+                normalize=NORMALIZE,
             )
             folds.append((
                 C_train[tr_idx][:, ranking], y_train[tr_idx],
@@ -158,6 +168,7 @@ def run(domain: str) -> None:
         C_train, y_train,
         selection_rule=SELECTION_RULE,
         significance_rule=SIG_RULE, significance_param=best["param"],
+        normalize=NORMALIZE,
     )
     C_tr_full = C_train[:, full_ranking]
     C_te_full = C_test[:, full_ranking]
@@ -170,6 +181,7 @@ def run(domain: str) -> None:
             C_train[tr_idx], y_train[tr_idx],
             selection_rule=SELECTION_RULE,
             significance_rule=SIG_RULE, significance_param=best["param"],
+            normalize=NORMALIZE,
         )
         for tr_idx, _ in splits
     ]
@@ -192,5 +204,12 @@ if __name__ == "__main__":
     print(f"Dataset: {DATASET}   |   representation rule: {SELECTION_RULE}"
           f"   |   significance: {SIG_RULE}   |   CV folds: {CV_FOLDS}")
     print("domain   | model  | d    | thr   | cv error | stability | test metrics")
-    for dom in (["raw", "spectrum"] if DOMAIN == "both" else [DOMAIN]):
+    if DATASET in SPECTRAL_DATASETS:
+        if DOMAIN != "spectrum":
+            print(f"{DATASET} curves are already log-periodograms: running the "
+                  f"'spectrum' domain on the data as provided.")
+        domains = ["spectrum"]
+    else:
+        domains = ["raw", "spectrum"] if DOMAIN == "both" else [DOMAIN]
+    for dom in domains:
         run(dom)

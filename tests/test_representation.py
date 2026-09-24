@@ -24,10 +24,15 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from functional_supervised_classification.coeffient_compute import (  # noqa: E402
+    coeff_matrix,
+    dyadic_level,
+)
 from functional_supervised_classification.representation import (  # noqa: E402
     discriminative_usage,
     energy,
     feature_ranking,
+    normalize_rows,
     selection_stability,
     significance_mask,
     usage_frequency,
@@ -259,6 +264,71 @@ def test_pipeline_still_runs_with_energy_rule():
         return
     assert proc.returncode == 0, f"pipeline failed:\nSTDOUT{proc.stdout}\nSTDERR{proc.stderr}"
     assert "acc=" in proc.stdout
+
+
+# ── orthogonal DWT, normalisation and the global-threshold rule ─────────────
+
+def test_periodized_dwt_is_orthogonal():
+    rng = np.random.default_rng(10)
+    for T, L in ((96, 5), (256, 8), (1024, 10)):
+        assert dyadic_level(T) == L
+        S = rng.normal(size=(4, T))
+        for wavelet in ("db1", "db4", "db10"):
+            C = coeff_matrix(S, wavelet=wavelet)
+            assert C.shape == (4, T)                            # T coefficients, no padding
+            assert np.allclose(np.sum(C ** 2, axis=1), np.sum(S ** 2, axis=1))  # Parseval
+
+
+def test_normalize_rows_gives_unit_energy():
+    C = np.random.default_rng(11).normal(size=(6, 9))
+    C[2] = 0.0
+    N = normalize_rows(C)
+    norms = np.linalg.norm(N, axis=1)
+    assert np.allclose(np.delete(norms, 2), 1.0)
+    assert np.all(N[2] == 0.0)                                  # null row left as is
+
+
+def test_global_threshold_matches_definition():
+    rng = np.random.default_rng(12)
+    C = normalize_rows(rng.normal(size=(20, 16)))
+    for c in (0.5, 1.0, 2.0):
+        assert np.array_equal(significance_mask(C, "global", c), np.abs(C) > c / 4.0)
+    for bad in (0.0, -1.0):
+        try:
+            significance_mask(C, "global", bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"global={bad} should raise")
+
+
+def test_global_usage_is_invariant_to_curve_scaling():
+    rng = np.random.default_rng(13)
+    C = rng.normal(size=(30, 16)) * rng.uniform(0.5, 1.5, size=16)
+    scaled = C * rng.uniform(0.01, 100.0, size=(30, 1))         # one gain per curve
+    r1 = feature_ranking(C, selection_rule="usage", significance_rule="global", significance_param=1.0)
+    r2 = feature_ranking(scaled, selection_rule="usage", significance_rule="global", significance_param=1.0)
+    assert np.array_equal(r1, r2)
+
+
+def test_global_usage_prefers_the_shared_feature():
+    C = _shared_vs_outlier_matrix()
+    rank = feature_ranking(C, selection_rule="usage", significance_rule="global",
+                           significance_param=1.0)
+    assert rank[0] == 2
+    assert rank.tolist().index(4) >= 2                      # the lone spike is not on top
+
+
+def test_changing_one_curve_moves_usage_by_at_most_one_over_n():
+    rng = np.random.default_rng(14)
+    C = rng.normal(size=(50, 32))
+    C2 = C.copy()
+    C2[7] = rng.normal(scale=1e6, size=32)                   # arbitrary replacement
+    phi1 = usage_frequency(significance_mask(normalize_rows(C), "global", 1.0))
+    phi2 = usage_frequency(significance_mask(normalize_rows(C2), "global", 1.0))
+    assert np.max(np.abs(phi1 - phi2)) <= 1.0 / 50 + 1e-12
+    # the energy of the same features can be moved arbitrarily far
+    assert np.max(np.abs(energy(C) - energy(C2))) > 1e6
 
 
 # ── standalone runner ──────────────────────────────────────────────────────
