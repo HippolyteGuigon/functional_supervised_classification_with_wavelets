@@ -1,0 +1,104 @@
+\chapter{Ondelettes et périodogramme}\label{chap:ondelettes}
+
+Ce chapitre rassemble les deux transformations appliquées aux courbes avant la classification : la décomposition sur une base d'ondelettes orthonormée, qui fournit les coefficients $X_{ij}$, et le périodogramme, qui fait passer une série temporelle dans le domaine des fréquences. Nous insistons sur une propriété qui joue un rôle central dans la suite : la transformée utilisée doit être \emph{orthogonale}, afin que l'énergie d'une courbe soit exactement la somme des carrés de ses coefficients.
+
+\section{Analyse multirésolution et bases d'ondelettes}\label{sec:amr}
+
+\begin{definition}[Analyse multirésolution]
+Une analyse multirésolution de $L^2(\R)$ est une suite croissante de sous-espaces fermés $(V_j)_{j\in\mathbb{Z}}$ telle que
+\begin{enumerate}[label=(\roman*)]
+  \item $\bigcap_j V_j=\{0\}$ et $\bigcup_j V_j$ est dense dans $L^2(\R)$ ;
+  \item $f\in V_j\iff f(2\,\cdot)\in V_{j+1}$ ;
+  \item il existe une fonction d'échelle $\phi\in V_0$ telle que $\{\phi(\cdot-k)\}_{k\in\mathbb{Z}}$ soit une base orthonormée de $V_0$.
+\end{enumerate}
+\end{definition}
+
+On note $W_j$ le supplémentaire orthogonal de $V_j$ dans $V_{j+1}$. Il existe une \emph{ondelette mère} $\psi$ telle que $\{\psi_{j,k}\}_{k\in\mathbb{Z}}$, avec $\psi_{j,k}(t)=2^{j/2}\psi(2^jt-k)$, soit une base orthonormée de $W_j$ \citep{mallat1989theory,daubechies1992ten}. Les ondelettes de Daubechies \texttt{db}$p$ sont à support compact de longueur $2p-1$ et possèdent $p$ moments nuls ; \texttt{db1} est la base de Haar \citep{haar1910theorie}.
+
+\paragraph{Bases sur $[0,1]$ par périodisation.} Pour une fonction $h$ de $L^2(\R)$, on pose $h^{\mathrm{per}}(t)=\sum_{\ell\in\mathbb{Z}}h(t+\ell)$. Les familles
+\[
+  \bigl\{\phi_{0,0}^{\mathrm{per}}\bigr\}\;\cup\;\bigl\{\psi_{j,k}^{\mathrm{per}}:\ j\ge0,\ 0\le k<2^j\bigr\}
+\]
+forment une base orthonormée de $\Lp$ \citep[section 9.3]{daubechies1992ten}, où $\phi^{\mathrm{per}}_{0,0}\equiv1$. C'est le cadre de \citet{berlinet2008functional} : toute courbe $X\in\Lp$ s'écrit
+\begin{equation}\label{eq:decomposition}
+  X = \eta\,\phi_{0,0} + \sum_{j\ge0}\sum_{k=0}^{2^j-1}\zeta_{j,k}\psi_{j,k},
+  \qquad \zeta_{j,k}=\langle X,\psi_{j,k}\rangle,\quad \eta=\langle X,\phi_{0,0}\rangle,
+\end{equation}
+la série convergeant dans $\Lp$. On réindexe la base en $\{\psi_1,\psi_2,\dots\}=\{\phi_{0,0},\psi_{0,0},\psi_{1,0},\psi_{1,1},\psi_{2,0},\dots\}$, de sorte que $X=\sum_{j\ge1}X_j\psi_j$ avec $X_j=\langle X,\psi_j\rangle$, et que les $2^J$ premières fonctions engendrent exactement $V_J$.
+
+\begin{proposition}[Parseval et projection]\label{prop:parseval}
+Pour tout $X\in\Lp$ et tout $J\ge0$, notons $P_J X=\sum_{j=1}^{2^J}X_j\psi_j$ la projection orthogonale de $X$ sur $V_J$. Alors
+\[
+  \|P_JX\|^2=\sum_{j=1}^{2^J}X_j^2,\qquad \|X-P_JX\|^2=\sum_{j>2^J}X_j^2\xrightarrow[J\to\infty]{}0.
+\]
+\end{proposition}
+
+\begin{proof}
+Conséquence directe de l'orthonormalité de la base et de la convergence dans $\Lp$ de \eqref{eq:decomposition}.
+\end{proof}
+
+\section{Transformée discrète et orthogonalité}\label{sec:dwt}
+
+En pratique, une courbe est observée en $T$ points équidistants, $x=(x(t_1),\dots,x(t_T))$. L'algorithme pyramidal de \citet{mallat1989theory} calcule les coefficients par filtrages successifs à l'aide des filtres $h$ (passe-bas) et $g$ (passe-haut) associés à $\phi$ et $\psi$ : à chaque niveau, les coefficients d'approximation sont convolués par $h$ et $g$ puis sous-échantillonnés d'un facteur 2.
+
+Le traitement des bords est crucial. Avec l'extension \emph{périodique}, un pas de l'algorithme sur un vecteur de longueur paire $N$ s'écrit $a\mapsto(Ha,Ga)$, où $H,G\in\R^{N/2\times N}$ sont des matrices circulantes sous-échantillonnées vérifiant $HH^\top=GG^\top=I$ et $HG^\top=0$ (conditions de filtres miroirs en quadrature). La matrice $\binom{H}{G}$ est donc orthogonale. Tant que la longueur reste paire, on peut itérer.
+
+\begin{proposition}\label{prop:dwt-orthogonale}
+Soit $T=2^{L}q$ avec $q$ impair. La transformée en ondelettes discrète périodisée à $L'\le L$ niveaux est une application linéaire orthogonale $W:\R^T\to\R^T$. En particulier $\|Wx\|_2=\|x\|_2$ pour tout $x\in\R^T$.
+\end{proposition}
+
+\begin{proof}
+Chaque niveau $\ell\le L'$ agit sur un vecteur d'approximation de longueur $T/2^{\ell-1}$, qui est paire car $\ell-1<L$ ; il est orthogonal d'après ce qui précède. On le complète par l'identité sur les coefficients de détail déjà calculés. $W$ est la composée de ces applications orthogonales.
+\end{proof}
+
+\begin{remarque}[Conséquence pratique]\label{rem:mode-symmetric}
+L'extension par défaut de la bibliothèque PyWavelets (mode \texttt{symmetric}) prolonge le signal par symétrie avant chaque filtrage et renvoie \emph{plus} de $T$ coefficients. La transformée n'est alors plus orthogonale. Sur un bruit blanc de longueur 96 (taille des ECG200), l'énergie des coefficients \texttt{db4} dépasse celle du signal d'environ 25\,\% ; pour \texttt{db10} elle est multipliée par 2,7. Les coefficients de bord sont artificiellement surpondérés, ce qui fausse le classement par énergie \eqref{eq:energie} et la normalisation des courbes utilisée au \cref{chap:methode}. Toutes les expériences de ce mémoire utilisent donc le mode \texttt{periodization} avec $L=\max\{\ell:2^\ell\mid T\}$ niveaux ($L=5$ pour $T=96$, $L=8$ pour $T=256$, $L=10$ pour $T=1024$) ; la propriété de Parseval est vérifiée numériquement par les tests du dépôt.
+\end{remarque}
+
+Dans la suite on identifie une courbe à son vecteur de coefficients $\bX=(X_1,\dots,X_p)\in\R^p$, $p=2^J$ dans le cadre théorique et $p=T$ dans les expériences.
+
+\section{Le périodogramme}\label{sec:periodogramme}
+
+Les données de parole de \citet{berlinet2008functional}, reprises de \citet{hastie1995penalized}, ne sont pas des enregistrements bruts mais des \emph{log-périodogrammes}. Nous décrivons ici cette transformation, qui constitue une étape d'ingénierie des caractéristiques, en suivant \citet[section 4.3]{shumway2017time}.
+
+\begin{definition}[Transformée de Fourier discrète et périodogramme]
+Soit $x_1,\dots,x_T$ une série observée. Aux fréquences de Fourier $\omega_k=k/T$, $k=0,\dots,T-1$, on définit
+\[
+  d(\omega_k)=T^{-1/2}\sum_{t=1}^{T}x_t\,e^{-2\pi i\omega_kt},
+  \qquad
+  I(\omega_k)=|d(\omega_k)|^2 .
+\]
+\end{definition}
+
+Comme $d(0)=\sqrt T\,\bar x$, on a $I(0)=T\bar x^2$ ; pour $k\ne0$, $\sum_te^{-2\pi i\omega_kt}=0$, donc $I(\omega_k)$ ne change pas si l'on retranche la moyenne. Le périodogramme décompose la variance empirique selon les fréquences :
+\[
+  \sum_{t=1}^T(x_t-\bar x)^2=\sum_{k=1}^{T-1}I(\omega_k),
+\]
+par la formule de Parseval pour la transformée de Fourier discrète.
+
+\begin{proposition}[{\citealp[propriété 4.4 et section 4.3]{shumway2017time}}]\label{prop:periodogramme}
+Soit $(x_t)$ un processus linéaire $x_t=\sum_j\psi_jw_{t-j}$ avec $(w_t)$ i.i.d. centré de variance $\sigma_w^2$, $\sum_j|j|^{1/2}|\psi_j|<\infty$, et de densité spectrale $f$ strictement positive. Pour des fréquences distinctes fixées $0<\nu_1,\dots,\nu_M<1/2$ et $\omega_{k_T(\ell)}\to\nu_\ell$,
+\[
+  \frac{2I(\omega_{k_T(\ell)})}{f(\nu_\ell)}\xrightarrow[T\to\infty]{\mathcal L}\chi^2_2,
+\]
+les $M$ limites étant indépendantes.
+\end{proposition}
+
+Deux conséquences guident notre usage du périodogramme.
+
+\paragraph{Un estimateur non consistant.} On a $\E I(\omega_k)\to f(\nu)$ mais $\Var I(\omega_k)\to f(\nu)^2$ : la variance ne tend pas vers zéro. Le périodogramme est un estimateur sans biais asymptotique mais non consistant de la densité spectrale. Pour la classification, ce n'est pas un défaut rédhibitoire : on ne cherche pas à estimer $f$, mais à disposer d'une représentation dans laquelle les classes se séparent. La décomposition en ondelettes suivie d'une sélection de coefficients joue en partie le rôle du lissage qui rendrait l'estimateur consistant.
+
+\paragraph{Stabilisation de la variance par le logarithme.} Si $2I/f\sim\chi^2_2$, alors $I/f$ suit une loi exponentielle $\mathcal E(1)$ et
+\[
+  \log I(\omega_k)=\log f(\omega_k)+\varepsilon_k,
+  \qquad \E\varepsilon_k=-\gamma,\quad \Var\varepsilon_k=\frac{\pi^2}{6},
+\]
+où $\gamma\approx0{,}5772$ est la constante d'Euler. Le log-périodogramme est donc, asymptotiquement, le log de la densité spectrale plus un bruit additif de variance constante : c'est le cadre naturel d'un débruitage par ondelettes \citep{wahba1980automatic,moulin1994wavelet}. Nous travaillons toujours avec $\log(I+\epsilon)$, $\epsilon=10^{-12}$.
+
+\paragraph{Conventions.} Nous retirons la moyenne de la série avant la transformée (retrait de tendance constant), puis nous supprimons l'ordonnée $I(0)$, nulle après centrage et qui écraserait l'échelle logarithmique. Pour une série de longueur $T$, on conserve les fréquences $\omega_k$, $1\le k\le\lfloor T/2\rfloor$, soit $48$ ordonnées pour les ECG200.
+
+\paragraph{Invariance par translation.} Si $y_t=x_{t-s}$ (translation circulaire), alors $d_y(\omega_k)=e^{-2\pi i\omega_ks}d_x(\omega_k)$ et $I_y=I_x$. Le périodogramme oublie la phase, donc la position temporelle des motifs. C'est un avantage lorsque l'information discriminante est fréquentielle (phonèmes), et un inconvénient lorsque la forme et la position d'un motif comptent (complexe QRS d'un électrocardiogramme). Nos expériences du \cref{sec:exp-ecg} confirment ce point.
+
+\begin{remarque}[Données déjà spectrales]\label{rem:phoneme-spectral}
+Les données \emph{phoneme} sont déjà des log-périodogrammes. Leur appliquer à nouveau la transformation produirait le périodogramme d'un log-périodogramme, objet sans interprétation physique ; dans une première version de nos expériences, cette erreur faisait chuter l'exactitude de $0{,}86$ à environ $0{,}6$. Ces données sont donc utilisées telles quelles : elles \emph{sont} la représentation spectrale.
+\end{remarque}

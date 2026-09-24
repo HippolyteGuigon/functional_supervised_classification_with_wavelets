@@ -1,0 +1,33 @@
+\chapter{Introduction}\label{chap:intro}
+
+\section{Classer des courbes}
+
+Dans de nombreux problèmes de classification, une observation n'est pas un vecteur de quelques mesures mais une courbe entière : un électrocardiogramme, un enregistrement de parole, un spectre de fréquences. On observe un échantillon $(X_1,Y_1),\dots,(X_N,Y_N)$ de copies indépendantes d'un couple $(X,Y)$, où $X$ prend ses valeurs dans un espace de Hilbert séparable de dimension infinie, typiquement $\Lp$, et $Y\in\{0,1\}$ est une étiquette. Le but est de construire, à partir de cet échantillon, une règle $g$ qui prédit l'étiquette d'une nouvelle courbe avec une probabilité d'erreur aussi proche que possible de l'erreur de Bayes $L^*$.
+
+Ce cadre relève de l'analyse des données fonctionnelles \citep{ramsay2005functional,ferraty2006nonparametric}. La dimension infinie de l'espace des observations rend la plupart des méthodes classiques inopérantes telles quelles : les règles d'apprentissage souffrent du fléau de la dimension et certaines méthodes universellement consistantes dans $\R^d$ cessent de l'être dans un espace de Hilbert général \citep{abraham2006kernel,cerou2006nearest}. Une étape de réduction de dimension est donc indispensable avant toute classification.
+
+\section{L'approche de Berlinet, Biau et Rouvière}
+
+L'article de \citet{berlinet2008functional}, qui sert de point de départ à ce mémoire, propose une stratégie simple et justifiée théoriquement :
+\begin{enumerate}
+  \item chaque courbe est décomposée sur une base d'ondelettes orthonormée et tronquée à un niveau de résolution $J$, ce qui fournit $2^J$ coefficients ;
+  \item les fonctions de base sont réordonnées selon un critère calculé sur l'échantillon d'apprentissage, l'\emph{énergie empirique} $\sum_i X_{ij}^2$ de chaque coefficient ;
+  \item la dimension effective $d$ et la règle de classification $g$ sont choisies conjointement en minimisant l'erreur empirique sur un échantillon de validation indépendant.
+\end{enumerate}
+Toutes les courbes sont alors représentées par les mêmes $d$ coefficients : c'est la \emph{représentation commune}. Les auteurs démontrent une inégalité oracle pour la règle sélectionnée et en déduisent sa consistance.
+
+\section{Objet du mémoire}
+
+Ce mémoire a trois objectifs, fixés avec mon encadrant.
+
+\paragraph{Reproduire la théorie de l'article.} Le \cref{chap:cadre} rassemble les outils de la reconnaissance automatique des formes \citep{devroye1988automatic,devroye1996probabilistic} et le \cref{chap:theorie} redémontre en détail l'inégalité oracle, le lemme d'approximation et le corollaire de consistance de \citet{berlinet2008functional}. Cette relecture fait apparaître une hypothèse implicite dans la preuve du corollaire, que nous explicitons (\cref{rem:equivariance}).
+
+\paragraph{Travailler dans le domaine spectral.} Les données de parole de l'article sont des log-périodogrammes et non des signaux bruts. Nous formalisons cette étape d'ingénierie des caractéristiques à partir de \citet{shumway2017time} (\cref{sec:periodogramme}) et nous comparons, sur une vraie série temporelle (ECG200), le domaine temporel et le domaine spectral.
+
+\paragraph{Proposer une nouvelle règle de représentation commune.} La règle de l'énergie n'est pas robuste : une seule courbe présentant un coefficient anormalement grand suffit à faire entrer l'indice correspondant dans la représentation commune. Nous proposons de classer les fonctions d'ondelettes selon leur \emph{fréquence d'utilisation} dans l'échantillon : après avoir ramené toutes les courbes à la même énergie, on compte la proportion de courbes dont le coefficient dépasse un \emph{seuil global} $\tau$. Nous montrons que cette règle hérite de toutes les garanties de l'article (\cref{thm:oracle-usage,cor:consistance-usage}) et qu'elle possède en plus des propriétés que la règle de l'énergie n'a pas : concentration exponentielle sans hypothèse de moment (\cref{thm:stabilite}), influence bornée d'une courbe aberrante (\cref{prop:robustesse}), invariance par changement d'échelle et parcimonie contrôlée (\cref{prop:proprietes-usage}).
+
+\section{Plan}
+
+Le \cref{chap:cadre} présente le cadre probabiliste et les inégalités de sélection par découpage de l'échantillon. Le \cref{chap:ondelettes} rappelle la construction des bases d'ondelettes sur $[0,1]$, la transformée discrète et le périodogramme. Le \cref{chap:methode} décrit la méthode de l'article et la nouvelle règle. Le \cref{chap:theorie} contient les résultats théoriques. Le \cref{chap:experiences} présente les expériences numériques : reproduction des résultats de l'article sur les données de parole et sur les données simulées, comparaison des domaines temporel et spectral, robustesse et comportement en fonction de la taille d'échantillon. L'annexe~\ref{chap:implementation} décrit l'implémentation.
+
+\paragraph{Code et reproductibilité.} Tout le code est disponible sur le dépôt \url{https://github.com/HippolyteGuigon/functional_supervised_classification_with_wavelets}. Les commandes permettant de reproduire chaque tableau et chaque figure sont données en annexe.
