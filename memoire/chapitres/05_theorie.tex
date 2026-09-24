@@ -1,0 +1,298 @@
+\chapter{Résultats théoriques}\label{chap:theorie}
+
+Ce chapitre contient les résultats théoriques du mémoire. La \cref{sec:reproduction} redémontre les résultats de \citet{berlinet2008functional} dans un cadre qui couvre directement toute règle de réordonnancement calculée sur la séquence d'apprentissage, et en particulier la règle d'usage. La \cref{sec:proprietes} établit les propriétés propres à la règle d'usage, que la règle de l'énergie ne possède pas.
+
+\section{Notations et hypothèses}\label{sec:notations}
+
+On reprend les notations des \cref{chap:cadre,chap:methode}. $(X,Y)$ est à valeurs dans $\Lp\times\{0,1\}$, $\{\psi_j\}_{j\ge1}$ est la base d'ondelettes réindexée, $p=2^J$ et
+\[
+  T_J:\Lp\to\R^p,\qquad T_J(x)=\bigl(\langle x,\psi_1\rangle,\dots,\langle x,\psi_p\rangle\bigr),\qquad \bX=T_J(X).
+\]
+On note $L^*_p\eqdef L^*_{T_J}$ l'erreur de Bayes lorsque l'on observe seulement $\bX$ (\cref{eq:bayes-T}). Pour une permutation $\sigma$ de $\{1,\dots,p\}$, on écrit $\Pi_\sigma\eqdef\Pi_{\sigma,p}$ ; c'est une bijection linéaire de $\R^p$.
+
+\begin{lemme}\label{lem:bayes-permutation}
+Pour toute permutation $\sigma$ déterministe, l'erreur de Bayes de la prédiction de $Y$ à partir de $\Pi_\sigma(\bX)$ est égale à $L^*_p$.
+\end{lemme}
+
+\begin{proof}
+Les règles $s:\R^p\to\{0,1\}$ appliquées à $\Pi_\sigma(\bX)$ sont exactement les règles $s\circ\Pi_\sigma$ appliquées à $\bX$, et $s\mapsto s\circ\Pi_\sigma$ est une bijection de l'ensemble des règles mesurables sur $\R^p$.
+\end{proof}
+
+\paragraph{Le cadre de sélection.} Un \emph{réordonnancement} est une famille $(\hsigma_c)_{c\in\Gamma}$ de permutations de $\{1,\dots,p\}$, indexée par un ensemble fini $\Gamma$ et fonction mesurable de $\Dn$ seulement. La règle de l'énergie correspond à $\Card\Gamma=1$ ; la règle d'usage à $\hsigma_c$ défini par la \cref{def:usage}. On note $\cC_n^{(d,c)}$ la classe des ensembles $\{u\in\R^d:g(u)=1\}$, $g\in\cD_n^{(d)}$, lorsque les règles de $\cD_n^{(d)}$ sont entraînées sur $(\Pi_{\hsigma_c,d}(\bX_i),Y_i)_{i\le n}$, et
+\[
+  \Sh^{(J)}_n(N)\eqdef\max_{c\in\Gamma}\ \sum_{d=1}^p\Sh_{\cC_n^{(d,c)}}(N).
+\]
+Dans les exemples usuels, $\Sh_{\cC_n^{(d,c)}}(N)$ admet un majorant qui ne dépend ni des données ni de $c$ (\cref{ex:nn,ex:arbres}).
+
+\section{Inégalité oracle et consistance}\label{sec:reproduction}
+
+\subsection{Inégalité oracle}
+
+\begin{theoreme}[Inégalité oracle ; {\citealp[théorème 2.1]{berlinet2008functional}}, étendu]\label{thm:oracle}
+Pour tout réordonnancement $(\hsigma_c)_{c\in\Gamma}$ fonction de $\Dn$ seulement, la règle $\hg$ définie par \eqref{eq:selection} vérifie
+\begin{multline*}
+  \E\{L_{n+m}(\hg)\}-L^*\ \le\ \underbrace{\bigl(L^*_p-L^*\bigr)}_{\text{approximation}}
+  +\underbrace{\Bigl(\E\Bigl\{\inf_{g\in\bD_n}L_n(g)\Bigr\}-L^*_p\Bigr)}_{\text{estimation}}\\
+  +\underbrace{2\,\E\biggl\{\sqrt{\frac{8\log\bigl(4\Card(\Gamma)\,\Sh^{(J)}_n(2m)\bigr)}{m}}+\frac{1}{\sqrt{(m/2)\log\bigl(4\Card(\Gamma)\,\Sh^{(J)}_n(2m)\bigr)}}\biggr\}}_{\text{sélection}},
+\end{multline*}
+où $\bD_n$ est la collection \eqref{eq:collection}.
+\end{theoreme}
+
+\begin{proof}
+\emph{Étape 1 : capacité de $\bD_n$.} Fixons $\Dn$. Pour $c\in\Gamma$ et $d\le p$, la sous-collection $\{g\circ\Pi_{\hsigma_c,d}\circ T_J:g\in\cD_n^{(d)}\}$ est de la forme $\{g\circ T:g\in\cD_n^{(d)}\}$ avec $T=\Pi_{\hsigma_c,d}\circ T_J$ mesurable et fixé. Par le \cref{lem:shatter-proprietes}\,(iii), son coefficient d'éclatement est majoré par $\Sh_{\cC_n^{(d,c)}}$. Par le \cref{lem:shatter-proprietes}\,(ii) appliqué à la réunion \eqref{eq:collection},
+\[
+  \Sh_{\cC_n}(2m)\le\sum_{c\in\Gamma}\sum_{d=1}^p\Sh_{\cC_n^{(d,c)}}(2m)\le\Card(\Gamma)\,\Sh^{(J)}_n(2m).
+\]
+
+\emph{Étape 2 : sélection.} Conditionnellement à $\Dn$, $\bD_n$ est une collection de règles fixées et $\hg$ minimise l'erreur de validation sur $\bD_n$. Le \cref{lem:selection}, la \cref{prop:vc} et la croissance de $f_m$ (\cref{lem:monotonie}) donnent
+\[
+  \E_n\{L_{n+m}(\hg)\}-\inf_{g\in\bD_n}L_n(g)\le2f_m\bigl(\Card(\Gamma)\,\Sh^{(J)}_n(2m)\bigr).
+\]
+On prend l'espérance par rapport à $\Dn$.
+
+\emph{Étape 3 : décomposition.} On écrit
+$\E L_{n+m}(\hg)-L^*=(L^*_p-L^*)+\bigl(\E\inf_{\bD_n}L_n-L^*_p\bigr)+\bigl(\E L_{n+m}(\hg)-\E\inf_{\bD_n}L_n\bigr)$ et l'on majore le dernier terme par l'étape 2.
+\end{proof}
+
+\begin{remarque}\label{rem:oracle-lecture}
+Trois points méritent d'être soulignés.
+\begin{enumerate}[label=(\alph*)]
+  \item Le terme d'approximation $L^*_p-L^*$ ne dépend \emph{pas} du réordonnancement. C'est la perte due à la troncature au niveau $J$.
+  \item Le coût du paramètre $c$ est un terme en $\log\Card(\Gamma)$ sous la racine : choisir le seuil parmi une grille finie ne coûte presque rien.
+  \item Le théorème ne dit pas quel réordonnancement est meilleur. L'intérêt d'un bon classement se lit dans le terme d'estimation : si peu de coefficients bien choisis suffisent, l'infimum sur $\bD_n$ est atteint en petite dimension, là où les règles de $\cD_n^{(d)}$ apprennent vite. La \cref{sec:proprietes} étudie la qualité du classement lui-même.
+\end{enumerate}
+\end{remarque}
+
+\subsection{Le terme d'approximation}
+
+\begin{lemme}\label{lem:borel}
+Soit $\cH$ un espace de Hilbert séparable de base orthonormée $(\psi_j)_{j\ge1}$. La tribu borélienne de $\cH$ est engendrée par les formes linéaires $x\mapsto\langle x,\psi_j\rangle$, $j\ge1$.
+\end{lemme}
+
+\begin{proof}
+Notons $\mathcal{G}$ la tribu engendrée par les coordonnées. Chaque coordonnée étant continue, $\mathcal{G}$ est contenue dans la tribu borélienne. Réciproquement, pour $a\in\cH$, l'application $x\mapsto\|x-a\|^2=\sum_j(\langle x,\psi_j\rangle-\langle a,\psi_j\rangle)^2$ est limite simple de fonctions $\mathcal{G}$-mesurables, donc $\mathcal{G}$-mesurable, et les boules ouvertes sont dans $\mathcal{G}$. Dans un espace métrique séparable, tout ouvert est réunion dénombrable de boules ouvertes (de centres dans une partie dénombrable dense et de rayons rationnels). Donc tout ouvert est dans $\mathcal{G}$.
+\end{proof}
+
+\begin{lemme}[{\citealp[lemme 2.1]{berlinet2008functional}}]\label{lem:approximation}
+$L^*_p$ est décroissante en $J$ et $L^*_p-L^*\to0$ lorsque $J\to\infty$.
+\end{lemme}
+
+\begin{proof}
+Notons $\cF_J\eqdef\sigma(\bX)=\sigma(\langle X,\psi_j\rangle,\ j\le2^J)$. C'est une filtration : les coordonnées de niveau $J$ font partie de celles de niveau $J+1$. D'après \eqref{eq:bayes-T}, $L^*_p=\E\min\{\eta_J,1-\eta_J\}$ avec $\eta_J\eqdef\E[Y\mid\cF_J]=\E[\eta(X)\mid\cF_J]$.
+
+\emph{Décroissance.} Toute règle fonction de $\bX^{(J)}$ est une règle fonction de $\bX^{(J+1)}$, donc $L^*_{2^{J+1}}\le L^*_{2^J}$.
+
+\emph{Convergence.} $(\eta_J)_J$ est une martingale bornée pour la filtration $(\cF_J)$. Par le théorème de convergence de Lévy, $\eta_J\to\E[\eta(X)\mid\cF_\infty]$ presque sûrement et dans $L^1$, où $\cF_\infty=\sigma\bigl(\bigcup_J\cF_J\bigr)=\sigma(\langle X,\psi_j\rangle,\ j\ge1)$. Par le \cref{lem:borel}, $\cF_\infty=\sigma(X)$, donc $\E[\eta(X)\mid\cF_\infty]=\eta(X)$. Comme $a\mapsto\min\{a,1-a\}$ est $1$-lipschitzienne,
+\[
+  0\le L^*_p-L^*\le\E|\eta_J-\eta(X)|\xrightarrow[J\to\infty]{}0. \qedhere
+\]
+\end{proof}
+
+\begin{remarque}
+\citet{berlinet2008functional} renvoient pour ce lemme à \citet[théorème 32.3]{devroye1996probabilistic}. La preuve ci-dessus est autonome et n'utilise que la complétude de la base et la séparabilité de $\Lp$ ; elle vaut pour toute base orthonormée.
+\end{remarque}
+
+\subsection{Consistance}
+
+La consistance demande de contrôler le terme d'estimation. \citet{berlinet2008functional} le majorent par le risque d'une règle consistante de $\cD_n^{(2^J)}$. Ce passage demande une précision, car la règle est appliquée aux coordonnées \emph{réordonnées par une permutation aléatoire}.
+
+\begin{definition}[Règle équivariante]\label{def:equivariance}
+Une règle $g_n:\R^p\times(\R^p\times\{0,1\})^n\to\{0,1\}$ est \emph{équivariante par permutation} si, pour toute permutation $\sigma$, tout $\bx$ et tout échantillon,
+\[
+  g_n\bigl(\Pi_\sigma\bx;\,(\Pi_\sigma\bx_i,y_i)_{i\le n}\bigr)=g_n\bigl(\bx;\,(\bx_i,y_i)_{i\le n}\bigr).
+\]
+\end{definition}
+
+\begin{exemple}\label{ex:equivariance}
+La règle des $k$ plus proches voisins pour la distance euclidienne est équivariante, les ex æquo étant départagés selon l'indice des points d'apprentissage : $\|\Pi_\sigma\bx-\Pi_\sigma\bx_i\|=\|\bx-\bx_i\|$. L'analyse discriminante quadratique l'est aussi : les moyennes et covariances empiriques deviennent $\Pi_\sigma\hat\mu_y$ et $\Pi_\sigma\hat\Sigma_y\Pi_\sigma^\top$, et les formes quadratiques et déterminants sont invariants par conjugaison par une matrice de permutation. Les arbres à coupures parallèles aux axes le sont à la règle de départage près entre coordonnées.
+\end{exemple}
+
+\begin{remarque}[Une hypothèse implicite]\label{rem:equivariance}
+Dans la preuve du corollaire 2.1 de \citet{berlinet2008functional}, la majoration $\E\{\inf_{d,g}L_n(g^{(d)})\}\le\E\{L_n(g_n^{(2^J)})\}$ utilise la consistance de $g^{(2^J)}_n$ pour la loi de $(\bX,Y)$. Or la règle est appliquée à $\Pi_{\hsigma}(\bX)$, où $\hsigma$ dépend de l'échantillon ; la loi de $(\Pi_{\hsigma}(\bX),Y)$ conditionnellement à $\Dn$ varie avec $n$. L'équivariance de $g_n$ rend l'argument exact : pour $d=p$, la règle réordonnée \emph{coïncide} avec la règle d'origine, quel que soit $\hsigma$. Les règles utilisées par les auteurs (W-NN, W-QDA) sont équivariantes, donc leur conclusion est correcte ; nous rendons simplement l'hypothèse explicite.
+\end{remarque}
+
+\begin{hypothese}\label{hyp:consistance}
+Soit $\cD$ une classe de lois de $(X,Y)$. Pour tout $J\ge0$, il existe dans $\cD_n^{(2^J)}$ une règle $g_n^{(J)}$ équivariante par permutation telle que, pour toute loi de $\cD$, $\E\{L_n(g_n^{(J)})\}\to L^*_{2^J}$ lorsque $n\to\infty$, $g_n^{(J)}$ étant entraînée sur $(\bX_i,Y_i)_{i\le n}$.
+\end{hypothese}
+
+\begin{hypothese}\label{hyp:validation}
+$m=m_n\to\infty$ et, pour tout $J\ge0$,
+\[
+  \frac{\E\{\log\Sh^{(J)}_n(2m)\}}{m}\xrightarrow[n\to\infty]{}0
+  \qquad\text{et}\qquad
+  \frac{\log\Card(\Gamma_n)}{m}\xrightarrow[n\to\infty]{}0 .
+\]
+\end{hypothese}
+
+\begin{corollaire}[Consistance ; {\citealp[corollaire 2.1]{berlinet2008functional}}, étendu]\label{cor:consistance}
+Sous les \cref{hyp:consistance,hyp:validation}, pour tout réordonnancement $(\hsigma_c)_{c\in\Gamma_n}$ fonction de $\Dn$ seulement, et pour toute loi de $\cD$,
+\[
+  \lim_{J\to\infty}\ \limsup_{n\to\infty}\ \E\{L_{n+m}(\hg)\}=L^* .
+\]
+\end{corollaire}
+
+\begin{proof}
+Fixons $J$ et $c_0\in\Gamma_n$. La règle $\bx\mapsto g_n^{(J)}\bigl(\Pi_{\hsigma_{c_0}}\bx;(\Pi_{\hsigma_{c_0}}\bX_i,Y_i)_{i\le n}\bigr)$ appartient à $\bD_n$ (terme $d=p$ de \eqref{eq:collection}). Par équivariance elle est égale à $\bx\mapsto g_n^{(J)}(\bx;(\bX_i,Y_i)_{i\le n})$. Donc
+\[
+  \E\Bigl\{\inf_{g\in\bD_n}L_n(g)\Bigr\}-L^*_p\le\E\{L_n(g_n^{(J)})\}-L^*_p\xrightarrow[n\to\infty]{}0
+\]
+par la \cref{hyp:consistance}. Pour le terme de sélection, posons $S\eqdef\Card(\Gamma_n)\,\Sh^{(J)}_n(2m)\ge1$. On a $1/\sqrt{(m/2)\log(4S)}\le1/\sqrt{(m/2)\log4}\to0$ et, par l'inégalité de Jensen appliquée à la racine carrée,
+\[
+  \E\sqrt{\frac{8\log(4S)}{m}}\le\sqrt{\frac{8\bigl(\log4+\log\Card(\Gamma_n)+\E\log\Sh^{(J)}_n(2m)\bigr)}{m}}\xrightarrow[n\to\infty]{}0
+\]
+par la \cref{hyp:validation}. Le \cref{thm:oracle} donne alors $\limsup_n\E\{L_{n+m}(\hg)\}-L^*\le L^*_p-L^*$, qui tend vers $0$ quand $J\to\infty$ par le \cref{lem:approximation}. Enfin $\E\{L_{n+m}(\hg)\}\ge L^*$ pour tout $n$.
+\end{proof}
+
+\begin{exemple}[Plus proches voisins]\label{ex:nn}
+Si $\cD_n^{(d)}$ contient les règles des $k$ plus proches voisins pour $1\le k\le n$, alors $\cD_n^{(d)}$ a au plus $n$ éléments et $\Sh_{\cC_n^{(d,c)}}(2m)\le n$, d'où $\Sh^{(J)}_n(2m)\le2^Jn$. La \cref{hyp:validation} se réduit à $J/m\to0$, $\log n/m\to0$ et $\log\Card(\Gamma_n)/m\to0$. La règle $k_n$-PPV avec $k_n\to\infty$ et $k_n/n\to0$ est universellement consistante dans $\R^p$ \citep{stone1977consistent} et équivariante (\cref{ex:equivariance}). La \cref{hyp:consistance} est donc satisfaite pour \emph{toutes} les lois : la procédure est universellement consistante au sens du \cref{cor:consistance}, avec la règle de l'énergie comme avec la règle d'usage. On peut prendre $m$ égal à une petite fraction de $n$.
+\end{exemple}
+
+\begin{exemple}[Arbres]\label{ex:arbres}
+Si $\cD_n^{(d)}$ contient les arbres binaires à coupures perpendiculaires aux axes, avec au plus $k$ nœuds internes, alors $\Sh_{\cC_n^{(d,c)}}(2m)\le(1+d(n+2m))^k$ \citep[chapitre 20]{devroye1996probabilistic} et $\Sh^{(J)}_n(2m)\le2^J(1+2^J(n+2m))^k$.
+\end{exemple}
+
+\subsection{Application à la règle d'usage}
+
+\begin{theoreme}[Garanties de la règle d'usage]\label{thm:oracle-usage}
+Soit $\Gamma\subset\,]0,\sqrt p[$ fini et $\hsigma_c$ la permutation de la \cref{def:usage}. La règle $\hg$ obtenue par \eqref{eq:selection} vérifie l'inégalité oracle du \cref{thm:oracle} avec ce $\Gamma$.
+\end{theoreme}
+
+\begin{proof}
+$\hphi_j(c)$ est une fonction mesurable de $\bX_1,\dots,\bX_n$ (composée de la normalisation, mesurable, et d'indicatrices d'ensembles boréliens), donc $\hsigma_c$ est une fonction mesurable de $\Dn$ seulement. On applique le \cref{thm:oracle}.
+\end{proof}
+
+\begin{corollaire}\label{cor:consistance-usage}
+Sous les \cref{hyp:consistance,hyp:validation}, la procédure fondée sur la règle d'usage avec seuil global est consistante au sens du \cref{cor:consistance}. Avec les plus proches voisins et une grille $\Gamma$ fixée, elle est universellement consistante dès que $J/m\to0$ et $\log n/m\to0$.
+\end{corollaire}
+
+Le point essentiel de ce corollaire est la séparation entre sélection des coefficients et classification. Si l'on classait les courbes normalisées, le terme d'approximation changerait, et la consistance pourrait être perdue.
+
+\begin{proposition}[La normalisation peut détruire l'information]\label{prop:normalisation-perte}
+Notons $\tilde L^*_p$ l'erreur de Bayes de la prédiction de $Y$ à partir de $\tX=\bX/\|\bX\|$. Alors $\tilde L^*_p\ge L^*_p$, et l'inégalité peut être stricte pour tout $J$ : il existe une loi de $(X,Y)$ telle que $L^*=L^*_p=0$ pour tout $J$ assez grand, et $\tilde L^*_p=\min\{\pi,1-\pi\}$ pour tout $J$, où $\pi=\PP(Y=1)$.
+\end{proposition}
+
+\begin{proof}
+$\tX$ est une fonction mesurable de $\bX$, d'où $\tilde L^*_p\ge L^*_p$ (\cref{eq:bayes-T}). Soit $h\in\Lp$ de norme $1$ et $X=(1+Y)h$. Dès que $P_Jh\neq0$, l'application $\bX\mapsto\|\bX\|$ vaut $(1+Y)\|P_Jh\|$ et détermine $Y$, donc $L^*_p=0$. En revanche $\tX=T_J(h)/\|T_J(h)\|$ est déterministe, indépendant de $Y$, et la meilleure règle prédit la classe majoritaire.
+\end{proof}
+
+\begin{remarque}[Plus de deux classes]\label{rem:multiclasse}
+Les données de parole comportent cinq classes. L'erreur de Bayes devient $\E[1-\max_k\eta_k(X)]$ avec $\eta_k(x)=\PP(Y=k\mid X=x)$, et le \cref{lem:approximation} se démontre de la même façon avec la fonction $1$-lipschitzienne (pour la norme $\ell^1$) $a\mapsto1-\max_ka_k$. Le \cref{lem:selection} et la \cref{prop:hoeffding} valent mot pour mot. Pour les familles infinies, il faut remplacer le coefficient d'éclatement par le nombre d'étiquetages distincts que la famille induit sur $N$ points.
+\end{remarque}
+
+\section{Propriétés propres à la règle d'usage}\label{sec:proprietes}
+
+L'inégalité oracle est la même pour tous les réordonnancements. Ce qui distingue la règle d'usage, ce sont les propriétés du classement lui-même : sa stabilité, sa robustesse et son interprétation.
+
+\subsection{Invariance et parcimonie}
+
+\begin{proposition}\label{prop:proprietes-usage}
+Soit $c>0$.
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{Invariance d'échelle.} Si l'on remplace chaque $\bX_i$ par $a_i\bX_i$ avec $a_i\neq0$, les fréquences $\hphi_j(c)$ et la permutation $\hsigma_c$ sont inchangées. La règle de l'énergie n'a pas cette propriété.
+  \item \emph{Parcimonie.} Toute courbe utilise strictement moins de $p/c^2$ fonctions de base : $\sum_{j=1}^ps_j(\bx;c)<p/c^2$ pour tout $\bx$. Par conséquent $\sum_j\hphi_j(c)<p/c^2$ et, pour tout $\alpha\in\,]0,1]$,
+  \[
+    \Card\bigl\{j:\hphi_j(c)\ge\alpha\bigr\}<\frac{p}{\alpha c^2}.
+  \]
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(i) $\widetilde{a_i\bX_i}=\operatorname{sgn}(a_i)\tX_i$ et $s_j$ ne dépend que de $|\tx_j|$. Pour l'énergie, multiplier $\bX_1$ par $a\to\infty$ fait coïncider le classement avec celui des $|X_{1j}|$.
+
+(ii) Si $\bx=0$, aucun indice n'est utilisé. Sinon, en notant $U=\{j:s_j(\bx;c)=1\}$,
+\[
+  1=\sum_{j=1}^p\tx_j^2\ \ge\ \sum_{j\in U}\tx_j^2\ >\ \Card(U)\,\frac{c^2}{p}
+\]
+si $U\neq\emptyset$, d'où $\Card(U)<p/c^2$. En moyennant sur les courbes, $\sum_j\hphi_j(c)=\frac1n\sum_i\Card(U_i)<p/c^2$. Enfin $\alpha\,\Card\{j:\hphi_j\ge\alpha\}\le\sum_j\hphi_j$.
+\end{proof}
+
+Le point (ii) donne une lecture directe du paramètre : avec $c=2$ et $p=256$, chaque courbe utilise moins de $64$ coefficients, et moins de $128$ indices sont utilisés par au moins la moitié des courbes.
+
+\subsection{Stabilité : concentration sans hypothèse de moment}
+
+On définit la fréquence d'utilisation théorique
+\[
+  \varphi_j(c)\eqdef\PP\Bigl\{|\tX_j|>\frac{c}{\sqrt p}\Bigr\},\qquad j=1,\dots,p,
+\]
+et l'on note $\varphi_{(1)}(c)\ge\dots\ge\varphi_{(p)}(c)$ ses valeurs ordonnées. Lorsque l'écart
+\[
+  \gamma_d(c)\eqdef\varphi_{(d)}(c)-\varphi_{(d+1)}(c)
+\]
+est strictement positif, l'ensemble $S_d(c)$ des $d$ indices de plus grande fréquence théorique est bien défini : c'est la représentation commune \emph{théorique} en dimension $d$.
+
+\begin{theoreme}[Stabilité de la représentation commune]\label{thm:stabilite}
+Pour tout $c>0$, tout $n\ge1$ et tout $t>0$, sans aucune hypothèse sur la loi de $X$,
+\[
+  \PP\Bigl\{\max_{1\le j\le p}\bigl|\hphi_j(c)-\varphi_j(c)\bigr|\ge t\Bigr\}\le2p\,e^{-2nt^2}.
+\]
+Si de plus $\gamma_d(c)>0$, alors
+\[
+  \PP\bigl\{\hS_d(c)\neq S_d(c)\bigr\}\le2p\,\exp\Bigl(-\frac{n\,\gamma_d(c)^2}{2}\Bigr).
+\]
+En particulier, si $p=p_n$ et $\gamma_d(c)=\gamma_{d,n}(c)$ dépendent de $n$ avec $n\gamma_{d,n}(c)^2/\log p_n\to\infty$, alors $\PP\{\hS_d(c)=S_d(c)\}\to1$ ; si $\sum_np_ne^{-n\gamma_{d,n}(c)^2/2}<\infty$, alors $\hS_d(c)=S_d(c)$ pour tout $n$ assez grand, presque sûrement.
+\end{theoreme}
+
+\begin{proof}
+Pour $j$ fixé, $s_j(\bX_1;c),\dots,s_j(\bX_n;c)$ sont des variables de Bernoulli i.i.d. de paramètre $\varphi_j(c)$ et $\hphi_j(c)$ est leur moyenne. L'inégalité de Hoeffding donne $\PP\{|\hphi_j-\varphi_j|\ge t\}\le2e^{-2nt^2}$ et une borne d'union sur $j$ donne la première inégalité.
+
+Supposons $\max_j|\hphi_j-\varphi_j|<\gamma_d/2$. Pour $j\in S_d$ et $k\notin S_d$,
+\[
+  \hphi_j>\varphi_j-\frac{\gamma_d}{2}\ge\varphi_{(d)}-\frac{\gamma_d}{2}=\varphi_{(d+1)}+\frac{\gamma_d}{2}\ge\varphi_k+\frac{\gamma_d}{2}>\hphi_k .
+\]
+Chacun des $d$ indices de $S_d$ a donc une fréquence empirique strictement supérieure à celle de chaque indice hors de $S_d$ : les $d$ premiers rangs de $\hsigma_c$ sont exactement $S_d$, quelle que soit la règle de départage. Ainsi $\{\hS_d\ne S_d\}\subset\{\max_j|\hphi_j-\varphi_j|\ge\gamma_d/2\}$, et la première inégalité avec $t=\gamma_d/2$ donne la seconde. Les deux dernières affirmations en découlent directement, la dernière par le lemme de Borel--Cantelli.
+\end{proof}
+
+\begin{remarque}[Comparaison avec la règle de l'énergie]\label{rem:energie-moments}
+Le pendant théorique de la règle de l'énergie est le classement des $\E X_j^2$. Il n'est défini que si ces moments sont finis. Sous cette seule hypothèse, la loi forte des grands nombres assure que l'ensemble sélectionné par l'énergie converge presque sûrement lorsque l'écart théorique correspondant est positif, mais sans aucune vitesse : une borne exponentielle analogue à celle du \cref{thm:stabilite} demande par exemple que les $X_j^2$ soient bornées ou sous-exponentielles, avec des constantes qui dépendent de la loi. Si les amplitudes ont une queue lourde, l'énergie empirique diverge et son classement n'a pas de cible. Par exemple, si $X=R\,h$ avec $h\in\Lp$ fixée, $\PP(R=0)=0$ et $\E R^2=\infty$, alors $\frac1n\sum_iX_{ij}^2\to\infty$ presque sûrement pour tout $j$ tel que $\langle h,\psi_j\rangle\neq0$. À l'inverse, $\tX=\operatorname{sgn}(R)\,T_J(h)/\|T_J(h)\|$, si bien que $\hphi_j(c)=\varphi_j(c)\in\{0,1\}$ exactement, pour tout $n$. La fréquence d'utilisation est toujours définie et la borne du \cref{thm:stabilite} est universelle : elle ne dépend que de $n$, $p$ et de l'écart $\gamma_d(c)$.
+\end{remarque}
+
+\subsection{Robustesse : influence bornée d'une courbe aberrante}
+
+On compare maintenant deux échantillons d'apprentissage $\Dn$ et $\Dn'$ de même taille $n$ qui diffèrent par au plus $k$ courbes : $\bX'_i=\bX_i$ sauf pour au plus $k$ indices $i$, les courbes modifiées étant arbitraires. On note avec un prime les quantités calculées sur $\Dn'$, et $\hat\gamma_d(c)=\hphi_{(d)}(c)-\hphi_{(d+1)}(c)$ l'écart empirique.
+
+\begin{proposition}[Robustesse de la règle d'usage]\label{prop:robustesse}
+Pour tout $c>0$ :
+\begin{enumerate}[label=(\roman*)]
+  \item $\max_j|\hphi'_j(c)-\hphi_j(c)|\le k/n$ ;
+  \item si $\hat\gamma_d(c)>2k/n$, alors $\hS'_d(c)=\hS_d(c)$ ;
+  \item si $j_0\notin\hS_d(c)$ et $\hphi_{(d)}(c)-\hphi_{j_0}(c)>2k/n$, alors $j_0\notin\hS'_d(c)$ : pour faire entrer dans la représentation commune un indice de fréquence $\hphi_{j_0}$, il faut modifier au moins $\frac n2\bigl(\hphi_{(d)}-\hphi_{j_0}\bigr)$ courbes.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(i) $\hphi'_j-\hphi_j=\frac1n\sum_i\bigl(s_j(\bX'_i;c)-s_j(\bX_i;c)\bigr)$ ; au plus $k$ termes sont non nuls et chacun est dans $[-1,1]$.
+(ii) Même argument que dans la preuve du \cref{thm:stabilite}, avec $\hphi$ à la place de $\varphi$ et $\hphi'$ à la place de $\hphi$ : pour $j\in\hS_d$ et $l\notin\hS_d$, $\hphi'_j\ge\hphi_{(d)}-k/n>\hphi_{(d+1)}+k/n\ge\hphi_l+k/n\ge\hphi'_l$.
+(iii) Pour chacun des $d$ indices $j\in\hS_d$, $\hphi'_j\ge\hphi_{(d)}-k/n>\hphi_{j_0}+k/n\ge\hphi'_{j_0}$. Au moins $d$ indices sont donc strictement devant $j_0$ pour $\hphi'$.
+\end{proof}
+
+\begin{proposition}[Point de rupture de la règle de l'énergie]\label{prop:rupture-energie}
+Pour tout échantillon $\Dn$ et tout indice $j_0$, il existe un échantillon $\Dn'$ qui diffère de $\Dn$ par une seule courbe et pour lequel $j_0$ est classé premier par la règle de l'énergie. Plus généralement, en modifiant $k$ courbes, on peut placer $k$ indices arbitraires aux $k$ premiers rangs.
+\end{proposition}
+
+\begin{proof}
+Soit $A^2>\sum_{i=1}^n\|\bX_i\|^2$ et $\bX'_1=A\,e_{j_0}$, les autres courbes étant inchangées. L'énergie de $j_0$ dans $\Dn'$ est au moins $A^2$, celle de tout $j\neq j_0$ est au plus $\sum_{i\ge2}X_{ij}^2\le\sum_i\|\bX_i\|^2<A^2$. Pour $k$ indices, on remplace $k$ courbes par $Ae_{j_1},\dots,Ae_{j_k}$.
+\end{proof}
+
+Les \cref{prop:robustesse,prop:rupture-energie} formalisent la motivation de la règle d'usage : dans le langage de la statistique robuste, le point de rupture de la représentation commune est de $1/n$ pour l'énergie, et de l'ordre de $\hat\gamma_d/2$ pour l'usage. Le \cref{sec:exp-contamination} vérifie ce comportement numériquement.
+
+\subsection{Synthèse}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & Énergie \eqref{eq:energie} & Usage à seuil global \eqref{eq:usage} \\
+\midrule
+Inégalité oracle et consistance & oui (\cref{thm:oracle,cor:consistance}) & oui (\cref{thm:oracle-usage,cor:consistance-usage}) \\
+Coût de la sélection du seuil & aucun & $\log\Card(\Gamma)$ \\
+Invariance par changement d'échelle des courbes & non & oui \\
+Concentration du classement & moments d'ordre $\ge2$ requis & exponentielle, sans hypothèse \\
+Influence d'une courbe modifiée & non bornée & au plus $1/n$ \\
+Contrôle du nombre de coefficients utilisés & non & $<p/c^2$ par courbe \\
+Utilise les étiquettes & non & non \\
+\bottomrule
+\end{tabular}
+\caption{Comparaison théorique des deux règles de représentation commune.}
+\label{tab:synthese-theorie}
+\end{table}

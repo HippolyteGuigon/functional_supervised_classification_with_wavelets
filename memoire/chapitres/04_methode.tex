@@ -1,0 +1,88 @@
+\chapter{Représentation commune et sélection de modèle}\label{chap:methode}
+
+\section{Schéma général}\label{sec:schema}
+
+On fixe un niveau de résolution maximal $J$, éventuellement fonction de $n$, et l'on pose $p=2^J$. Chaque courbe $X_i$ est représentée par le vecteur de ses $p$ premiers coefficients
+\[
+  \bX_i=(X_{i1},\dots,X_{ip})\in\R^p,\qquad X_{ij}=\langle X_i,\psi_j\rangle,
+\]
+c'est-à-dire par sa projection $P_JX_i$ sur $V_J$ (\cref{prop:parseval}). Pour une permutation $\sigma$ de $\{1,\dots,p\}$ et $1\le d\le p$, on note
+\[
+  \Pi_{\sigma,d}:\R^p\to\R^d,\qquad \Pi_{\sigma,d}(\bx)=(x_{\sigma(1)},\dots,x_{\sigma(d)})
+\]
+la projection sur les $d$ coordonnées de rang le plus élevé selon $\sigma$. La méthode comporte trois étapes.
+
+\begin{enumerate}
+  \item \textbf{Familles de règles.} Pour chaque $d\le p$, on se donne une collection $\cD_n^{(d)}$ de règles de classification opérant dans $\R^d$ et construites à partir de $n$ points d'apprentissage de $\R^d\times\{0,1\}$ : $k$ plus proches voisins pour tous les $k$ (W-NN), analyse discriminante quadratique (W-QDA), arbres de classification (W-CART).
+  \item \textbf{Réordonnancement.} La séquence d'apprentissage détermine une permutation $\hsigma$ (ou une famille de permutations $\hsigma_c$ indexée par un paramètre $c$) qui classe les fonctions de base de la plus à la moins informative. L'ensemble $\hS_d=\{\hsigma(1),\dots,\hsigma(d)\}$ est la \emph{représentation commune} en dimension $d$ : \emph{toutes} les courbes sont représentées par les mêmes $d$ coefficients.
+  \item \textbf{Sélection.} La dimension, le paramètre et la règle sont choisis en minimisant l'erreur sur la séquence de validation :
+  \begin{equation}\label{eq:selection}
+    (\hc,\hd,\hg)\in\argmin_{c\in\Gamma,\ 1\le d\le p,\ g\in\cD_n^{(d)}}\ \frac1m\sum_{i=n+1}^{n+m}\1\bigl\{g\bigl(\Pi_{\hsigma_c,d}(\bX_i)\bigr)\neq Y_i\bigr\}.
+  \end{equation}
+\end{enumerate}
+
+Dans l'étape 3, la règle $g\in\cD_n^{(d)}$ est entraînée sur les points $\bigl(\Pi_{\hsigma_c,d}(\bX_i),Y_i\bigr)_{i\le n}$. Conditionnellement à $\Dn$, la collection
+\begin{equation}\label{eq:collection}
+  \bD_n\eqdef\bigcup_{c\in\Gamma}\ \bigcup_{d=1}^{p}\ \bigl\{x\mapsto g\bigl(\Pi_{\hsigma_c,d}(\bX)\bigr):\ g\in\cD_n^{(d)}\bigr\}
+\end{equation}
+est donc une collection de règles fixées, et \eqref{eq:selection} est exactement la minimisation \eqref{eq:erm} du \cref{chap:cadre}. Il reste à spécifier le réordonnancement.
+
+\section{La règle de l'énergie}\label{sec:energie}
+
+\citet{berlinet2008functional} classent les fonctions de base selon leur énergie empirique :
+\begin{equation}\label{eq:energie}
+  \sum_{i=1}^nX_{i\hsigma(1)}^2\ \ge\ \sum_{i=1}^nX_{i\hsigma(2)}^2\ \ge\ \dots\ \ge\ \sum_{i=1}^nX_{i\hsigma(p)}^2 .
+\end{equation}
+Il n'y a pas de paramètre ($\Gamma$ est réduit à un point). Cette étape s'apparente au seuillage des coefficients d'ondelettes \citep{donoho1995wavelet}, avec une différence essentielle soulignée par les auteurs : le seuillage est \emph{global}, commun à toutes les courbes, alors qu'un seuillage individuel produirait une base significative différente pour chaque courbe et donc pas de représentation commune.
+
+\paragraph{Fragilité.} Le critère \eqref{eq:energie} est une somme de carrés : il est dominé par les plus grandes valeurs. Une seule courbe aberrante, par exemple un artefact d'enregistrement localisé, possède quelques coefficients fins de très grande amplitude, et ces indices passent en tête du classement même si aucune autre courbe ne les utilise. De même, une courbe d'amplitude globale très supérieure aux autres impose sa propre base significative à tout l'échantillon. Enfin, la convergence de $\frac1n\sum_iX_{ij}^2$ vers $\E X_j^2$ requiert que ce moment soit fini ; sans hypothèse supplémentaire, aucune vitesse n'est disponible. Ces trois défauts sont formalisés et quantifiés au \cref{sec:proprietes}.
+
+\section{Une règle fondée sur la fréquence d'utilisation}\label{sec:usage}
+
+L'idée est de remplacer une mesure d'\emph{intensité} (combien d'énergie porte l'indice $j$ dans l'échantillon) par une mesure de \emph{fréquence} (dans combien de courbes l'indice $j$ est significatif). Pour que « significatif » ait le même sens pour toutes les courbes, on les ramène d'abord à la même énergie, puis on applique un seuil unique.
+
+\begin{definition}[Normalisation]\label{def:normalisation}
+Pour $\bx\in\R^p$, on pose $\tx\eqdef\bx/\|\bx\|$ si $\bx\neq0$ et $\tx\eqdef0$ sinon, où $\|\cdot\|$ est la norme euclidienne. D'après la \cref{prop:parseval}, $\|\bX_i\|=\|P_JX_i\|_{\Lp}$ : normaliser le vecteur des coefficients revient à normaliser la courbe projetée dans $\Lp$.
+\end{definition}
+
+\begin{definition}[Fréquence d'utilisation et règle d'usage]\label{def:usage}
+Soit $c>0$. On dit que la courbe $x$ \emph{utilise} la fonction de base $\psi_j$ au niveau $c$ si
+\begin{equation}\label{eq:indicatrice}
+  s_j(\bx;c)\eqdef\1\Bigl\{|\tx_j|>\frac{c}{\sqrt p}\Bigr\}=1 .
+\end{equation}
+La \emph{fréquence d'utilisation empirique} de $\psi_j$ est
+\begin{equation}\label{eq:usage}
+  \hphi_j(c)\eqdef\frac1n\sum_{i=1}^n s_j(\bX_i;c)\in[0,1],
+\end{equation}
+et la permutation $\hsigma_c$ classe les indices par fréquence décroissante, les ex æquo étant départagés par l'ordre naturel (du plus grossier au plus fin) :
+\[
+  \hphi_{\hsigma_c(1)}(c)\ge\hphi_{\hsigma_c(2)}(c)\ge\dots\ge\hphi_{\hsigma_c(p)}(c).
+\]
+La représentation commune en dimension $d$ est $\hS_d(c)=\{\hsigma_c(1),\dots,\hsigma_c(d)\}$.
+\end{definition}
+
+\paragraph{Interprétation du seuil.} Comme $\|\tx\|=1$, la condition $|\tx_j|>c/\sqrt p$ équivaut à
+\[
+  x_j^2>\frac{c^2}{p}\,\|\bx\|^2 :
+\]
+la courbe utilise $\psi_j$ lorsque ce coefficient porte plus de $c^2$ fois la part d'énergie qu'il recevrait si l'énergie de la courbe était répartie uniformément sur les $p$ coefficients. Le paramètre $c$ est donc sans dimension et comparable d'un jeu de données à l'autre. Pour $c\ge\sqrt p$, aucun coefficient n'est jamais utilisé ; pour $c\to0$, tout coefficient non nul l'est. On prend donc $\Gamma\subset\,]0,\sqrt p[$ fini ; dans nos expériences, $\Gamma=\{0{,}5;\,1;\,1{,}5;\,2;\,3\}$.
+
+\paragraph{Seuil global ou seuil individuel.} Sur les courbes normalisées, le seuil $\tau=c/\sqrt p$ est le même pour toutes les courbes. Sur les courbes d'origine, il correspond au seuil $\tau_i=c\,\|\bX_i\|/\sqrt p$, proportionnel à la norme de chaque courbe. Une première version de ce travail utilisait des seuils individuels non liés à la norme (garder les $m$ plus grands coefficients de chaque courbe, ou un seuil universel de \citealt{donoho1994ideal}) ; le choix d'un seuil global après normalisation, retenu avec l'encadrant, simplifie à la fois l'interprétation et l'analyse théorique.
+
+\paragraph{Ce que la règle ne fait pas.} La règle d'usage est \emph{non supervisée} : elle n'utilise pas les étiquettes. Nous avions aussi étudié une variante qui classe les indices par l'écart de fréquence d'utilisation entre classes, $|\hphi^{(1)}_j-\hphi^{(0)}_j|$. Elle donnait parfois de meilleures erreurs de prédiction, mais elle ne définit plus une représentation \emph{commune} décrivant les courbes : elle optimise directement la séparation, au risque de sur-ajuster le critère de sélection. Conformément à l'objectif fixé, qui est de choisir une représentation adaptée aux données même si elle n'est pas la plus performante en prédiction, nous ne la retenons pas.
+
+\paragraph{Normalisation et classification.} La normalisation sert uniquement à \emph{choisir} les indices. Les règles $g\in\cD_n^{(d)}$ reçoivent les coefficients d'origine $\Pi_{\hsigma_c,d}(\bX)$, non normalisés. Ce choix est essentiel pour la théorie : la \cref{prop:normalisation-perte} montre que classer les courbes normalisées peut augmenter strictement l'erreur de Bayes.
+
+\section{Récapitulatif de l'algorithme}
+
+\begin{enumerate}[label=\arabic*.]
+  \item Si les courbes sont des séries temporelles et que l'on travaille dans le domaine spectral, remplacer chaque courbe par son log-périodogramme (\cref{sec:periodogramme}).
+  \item Calculer les coefficients d'ondelettes par la transformée périodisée orthogonale (\cref{prop:dwt-orthogonale}).
+  \item Sur la séquence d'apprentissage seulement : normaliser les vecteurs de coefficients, calculer $\hphi_j(c)$ pour chaque $c\in\Gamma$ et en déduire $\hsigma_c$.
+  \item Pour chaque $c\in\Gamma$, $d\le d_{\max}$ et $g\in\cD_n^{(d)}$ : entraîner $g$ sur $(\Pi_{\hsigma_c,d}(\bX_i),Y_i)_{i\le n}$ et calculer son erreur sur la séquence de validation.
+  \item Retenir le triplet d'erreur de validation minimale (en cas d'égalité, la plus petite dimension).
+\end{enumerate}
+
+\begin{remarque}[Validation croisée]
+Le code du dépôt propose aussi une sélection par validation croisée à $K$ blocs, où le classement est recalculé à l'intérieur de chaque bloc à partir de ses seules données d'apprentissage. C'est l'usage courant en pratique, mais les garanties du \cref{chap:theorie} portent sur le découpage apprentissage/validation, qui est aussi le protocole de \citet{berlinet2008functional}. Toutes les expériences du \cref{chap:experiences} utilisent donc ce découpage.
+\end{remarque}
