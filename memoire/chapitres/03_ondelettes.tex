@@ -59,7 +59,7 @@ Dans la suite on identifie une courbe à son vecteur de coefficients $\bX=(X_1,\
 
 \section{Le périodogramme}\label{sec:periodogramme}
 
-Les données de parole de \citet{berlinet2008functional}, reprises de \citet{hastie1995penalized}, ne sont pas des enregistrements bruts mais des \emph{log-périodogrammes}. Nous décrivons ici cette transformation, qui constitue une étape d'ingénierie des caractéristiques, en suivant \citet[section 4.3]{shumway2017time}.
+Les données de parole de \citet{berlinet2008functional}, reprises de \citet{hastie1995penalized}, ne sont pas des enregistrements bruts mais des \emph{log-périodogrammes}. Nous décrivons ici cette transformation, qui constitue une étape d'ingénierie des caractéristiques, en suivant \citet[section 4.3]{shumway2011time}.
 
 \begin{definition}[Transformée de Fourier discrète et périodogramme]
 Soit $x_1,\dots,x_T$ une série observée. Aux fréquences de Fourier $\omega_k=k/T$, $k=0,\dots,T-1$, on définit
@@ -76,8 +76,8 @@ Comme $d(0)=\sqrt T\,\bar x$, on a $I(0)=T\bar x^2$ ; pour $k\ne0$, $\sum_te^{-2
 \]
 par la formule de Parseval pour la transformée de Fourier discrète.
 
-\begin{proposition}[{\citealp[propriété 4.4 et section 4.3]{shumway2017time}}]\label{prop:periodogramme}
-Soit $(x_t)$ un processus linéaire $x_t=\sum_j\psi_jw_{t-j}$ avec $(w_t)$ i.i.d. centré de variance $\sigma_w^2$, $\sum_j|j|^{1/2}|\psi_j|<\infty$, et de densité spectrale $f$ strictement positive. Pour des fréquences distinctes fixées $0<\nu_1,\dots,\nu_M<1/2$ et $\omega_{k_T(\ell)}\to\nu_\ell$,
+\begin{proposition}[{\citealp[propriété 4.5]{shumway2011time}}]\label{prop:periodogramme}
+Soit $(x_t)$ un processus linéaire $x_t=\sum_{j\in\mathbb Z}\psi_jw_{t-j}$ avec $(w_t)$ i.i.d. centré de variance $\sigma_w^2$, $\sum_j|\psi_j|<\infty$, de fonction d'autocovariance $\gamma$ vérifiant $\sum_h|h|\,|\gamma(h)|<\infty$ et de densité spectrale $f$. Pour des fréquences distinctes fixées $0<\nu_1,\dots,\nu_M<1/2$ telles que $f(\nu_\ell)>0$, et des fréquences de Fourier $\omega_{k_T(\ell)}\to\nu_\ell$,
 \[
   \frac{2I(\omega_{k_T(\ell)})}{f(\nu_\ell)}\xrightarrow[T\to\infty]{\mathcal L}\chi^2_2,
 \]
