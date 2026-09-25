@@ -15,9 +15,9 @@ Ce mémoire est parti de la méthode de classification de courbes par ondelettes
   \item la représentation commune empirique converge exponentiellement vite vers sa version théorique, sans aucune hypothèse de moment (\cref{thm:stabilite}) ;
   \item une courbe modifiée déplace chaque fréquence d'au plus $1/n$, alors qu'une seule courbe suffit à imposer n'importe quel indice à la règle de l'énergie (\cref{prop:robustesse,prop:rupture-energie}).
 \end{itemize}
-Sur le plan empirique, la règle d'usage fait jeu égal avec la règle de l'énergie sur les données de parole et sur les ECG dans le domaine temporel. Elle est meilleure sur les périodogrammes d'ECG et, surtout, beaucoup plus robuste : une seule courbe aberrante sur cinquante dégrade fortement la règle de l'énergie et laisse la règle d'usage intacte. Elle est en revanche moins performante sur les données simulées de l'article en petit échantillon, où l'information discriminante est portée par des coefficients rares ; cet écart disparaît quand la taille d'échantillon augmente.
+Sur le plan empirique, la règle d'usage fait jeu égal avec la règle de l'énergie sur les données de parole et sur les ECG dans le domaine temporel. Elle est meilleure avec W-QDA sur les périodogrammes d'ECG et, surtout, beaucoup plus robuste : une seule courbe aberrante sur cinquante dégrade fortement la règle de l'énergie et laisse la règle d'usage intacte. Sur les données simulées de l'article, où l'information discriminante est portée par des coefficients rares, elle est moins performante avec une grille de seuils trop étroite ; avec une grille couvrant les grands seuils, ou lorsque la taille d'échantillon augmente, l'écart avec la règle de l'énergie n'est plus significatif.
 
-La règle d'usage n'est donc pas une règle « plus performante » : elle définit une représentation commune plus stable, plus robuste et plus facile à interpréter, au prix d'une perte d'efficacité lorsque la classe dépend d'un détail rare. C'est le compromis visé.
+La règle d'usage n'est donc pas une règle « plus performante » : elle définit une représentation commune plus robuste et plus facile à interpréter, dont les performances sur données propres sont comparables à celles de la règle de l'énergie à condition de bien choisir la grille de seuils. C'est le compromis visé.
 
 \section{Limites}
 

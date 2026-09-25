@@ -83,7 +83,7 @@ TRANSFORMS = {"raw": lambda s: s, "spectrum": to_periodogram}
 # "usage" rules; "energy" ignores the threshold, hence a single ``None``.
 PARAM_GRID = {
     "energy"   : [None],
-    "global"   : [0.5, 1.0, 1.5, 2.0, 3.0],
+    "global"   : [0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0],   # c < sqrt(p); see the thesis, grid sensitivity
     "top_m"    : [8, 16, 32, 64],
     "quantile" : [0.80, 0.90, 0.95],
     "universal": [0.7, 1.0, 1.3],

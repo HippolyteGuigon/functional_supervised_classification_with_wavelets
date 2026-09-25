@@ -80,7 +80,7 @@ où $f_{\mu,\sigma}$ est la densité gaussienne de moyenne $\mu$ et de variance 
 
 \paragraph{Énergie contre usage.} Ici, la règle d'usage est \emph{moins bonne} en prédiction : l'écart est d'environ $+0{,}02$ pour W-QDA et pour la sélection conjointe, significatif ($p<10^{-3}$) (\cref{tab:simulation-resume}). L'explication la plus plausible tient à la structure du modèle. L'information discriminante est la \emph{position} des deux bouffées, qui varie d'une courbe à l'autre ; les coefficients fins qui la portent ne sont donc utilisés que par une petite fraction des courbes. Par construction, la règle d'usage favorise au contraire les coefficients utilisés par beaucoup de courbes, et le bruit, présent partout, en fait partie. La règle de l'énergie, elle, est attirée par les courbes à bouffées très concentrées (petit $\sigma$), dont les grands coefficients sont précisément ceux qui localisent les bouffées. Ce qui est un défaut de robustesse devient ici un avantage.
 
-La règle d'usage produit en revanche une représentation nettement plus stable d'une répétition à l'autre (indice de Jaccard $0{,}32$ contre $0{,}11$). Enfin, le seuil sélectionné est souvent le plus grand de la grille, $c=3$ ; nous étudions l'effet d'une grille plus large au \cref{sec:exp-grille}.
+La règle d'usage produit en revanche une représentation nettement plus stable d'une répétition à l'autre (indice de Jaccard $0{,}32$ contre $0{,}11$). Enfin, le seuil sélectionné est, dans près de la moitié des répétitions, le plus grand de la grille, $c=3$ : la grille est trop étroite pour ce modèle. Le \cref{sec:exp-grille} montre qu'avec une grille plus large l'écart avec la règle de l'énergie cesse d'être significatif.
 
 Cet exemple illustre la contrepartie annoncée au \cref{chap:methode} : la règle d'usage cherche une représentation \emph{commune}, qui décrit ce que partagent les courbes, et non la représentation la plus discriminante. Lorsque la classe dépend d'un détail rare et mobile, les deux objectifs divergent.
 
@@ -125,7 +125,7 @@ La \cref{prop:robustesse} explique ce comportement : chaque courbe contaminée d
 
 \section{Comportement quand la taille d'échantillon augmente}\label{sec:exp-taille}
 
-Le \cref{cor:consistance-usage} affirme que la règle d'usage conduit, comme la règle de l'énergie, à une procédure consistante. Nous l'illustrons sur le modèle simulé, avec $n=m\in\{25,50,100,200,400\}$, $500$ courbes de test et $100$ répétitions.
+Le \cref{cor:consistance-usage} affirme que la règle d'usage conduit, comme la règle de l'énergie, à une procédure consistante. Nous l'illustrons sur le modèle simulé, avec $500$ courbes de test, $100$ répétitions et des séquences d'apprentissage et de validation de tailles $n=m\in\{25,50,100,200,400\}$.
 
 \begin{figure}[ht]
 \centering
@@ -134,7 +134,7 @@ Le \cref{cor:consistance-usage} affirme que la règle d'usage conduit, comme la 
 \label{fig:taille}
 \end{figure}
 
-Les deux erreurs décroissent vers $0$ et l'écart entre les règles se referme (\cref{fig:taille}) : $0{,}159$ contre $0{,}143$ pour $n=25$, puis $0{,}030$ contre $0{,}028$ pour $n=200$ et $0{,}018$ pour les deux règles pour $n=400$. La dimension sélectionnée croît avec $n$, conformément à l'arbitrage décrit par le \cref{thm:oracle} : avec plus de données, les règles de $\cD_n^{(d)}$ apprennent bien en dimension plus grande, et la sélection va chercher les coefficients plus fins. L'avantage de la règle de l'énergie observé au \cref{sec:exp-simulation} est donc un effet de petit échantillon : il porte sur la vitesse, pas sur la limite.
+Les deux erreurs décroissent vers $0$ et l'écart entre les règles se referme (\cref{fig:taille}) : $0{,}159$ contre $0{,}143$ pour $n=25$, puis $0{,}030$ contre $0{,}028$ pour $n=200$ et $0{,}018$ pour les deux règles pour $n=400$. La dimension sélectionnée croît avec $n$, conformément à l'arbitrage décrit par le \cref{thm:oracle} : avec plus de données, les règles de $\cD_n^{(d)}$ apprennent bien en dimension plus grande, et la sélection va chercher les coefficients plus fins. L'avantage de la règle de l'énergie observé au \cref{sec:exp-simulation} (avec la grille par défaut) est donc un effet de petit échantillon : il porte sur la vitesse, pas sur la limite.
 
 \begin{figure}[ht]
 \centering
@@ -143,4 +143,18 @@ Les deux erreurs décroissent vers $0$ et l'écart entre les règles se referme 
 \label{fig:dimensions}
 \end{figure}
 
-%%%GRILLE%%%
+\section{Sensibilité à la grille de seuils}\label{sec:exp-grille}
+
+Au \cref{sec:exp-simulation}, le seuil retenu était souvent le plus grand de la grille $\Gamma=\{0{,}5;\,1;\,1{,}5;\,2;\,3\}$. Nous refaisons donc les expériences, sur les mêmes partitions, avec la grille élargie $\Gamma'=\{0{,}5;\,1;\,1{,}5;\,2;\,3;\,4;\,6;\,8\}$, qui reste dans l'intervalle $]0,\sqrt p[$ pour les trois jeux de données ($\sqrt p\ge\sqrt{96}\approx9{,}8$). D'après le \cref{thm:oracle}, cela ne coûte qu'un terme en $\log\Card(\Gamma')$.
+
+\begin{table}[ht]
+\centering
+\small
+\input{tables/grille}
+\caption{Règle d'usage avec la grille par défaut et avec la grille élargie (\texttt{db4}, sélection conjointe, $100$ répétitions appariées). La $p$-valeur compare les deux grilles.}
+\label{tab:grille}
+\end{table}
+
+Sur les données simulées, la grille élargie fait baisser l'erreur de $0{,}101$ à $0{,}085$ ($p<10^{-3}$), avec des dimensions plus faibles ; les seuils $c=6$ et $c=8$ sont retenus dans plus de la moitié des répétitions (\cref{tab:grille}). L'écart avec la règle de l'énergie ($0{,}081$) n'est alors plus significatif (écart apparié $+0{,}004$, $p=0{,}44$). Sur \emph{phoneme} et sur ECG200, rien ne change de façon significative : les grands seuils ne sont presque jamais retenus.
+
+L'interprétation est directe. Avec $c$ grand, une courbe n'« utilise » un coefficient que s'il porte une part importante de son énergie, soit, pour $p=1024$ et $c=8$, plus de $6\,\%$ de l'énergie totale. On ne retient ainsi que les coefficients dominants de chaque courbe, qui sont ici ceux qui localisent les bouffées. La règle garde ses propriétés de robustesse, puisque chaque courbe vote toujours pour moins de $p/c^2$ indices et que son influence reste bornée par $1/n$. Nous recommandons donc de prendre une grille qui couvre tout l'intervalle $]0,\sqrt p[$, par exemple jusqu'à $c\approx\sqrt p/2$ ; c'est désormais la grille par défaut du code.
