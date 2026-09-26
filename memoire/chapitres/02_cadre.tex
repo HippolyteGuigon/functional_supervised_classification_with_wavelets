@@ -1,6 +1,6 @@
-\chapter{Cadre : classification et sélection par validation}\label{chap:cadre}
+\chapter{Cadre : classification et sélection par validation}\label{chap-cadre}
 
-Ce chapitre fixe le cadre probabiliste et démontre les trois inégalités sur lesquelles repose toute l'analyse : la réduction de la sélection à une déviation uniforme (\cref{lem:selection}), et deux bornes de cette déviation, pour une famille finie (\cref{prop:hoeffding}) et pour une famille de capacité finie au sens de Vapnik--Chervonenkis (\cref{prop:vc}). Nous suivons \citet[chapitres 2, 8, 12 et 13]{devroye1996probabilistic}.
+Ce chapitre fixe le cadre probabiliste et démontre les trois inégalités sur lesquelles repose toute l'analyse : la réduction de la sélection à une déviation uniforme (\cref{lem-selection}), et deux bornes de cette déviation, pour une famille finie (\cref{prop-hoeffding}) et pour une famille de capacité finie au sens de Vapnik--Chervonenkis (\cref{prop-vc}). Nous suivons \citet[chapitres 2, 8, 12 et 13]{devroye1996probabilistic}.
 
 \section{Risque et règle de Bayes}
 
@@ -10,7 +10,7 @@ Soit $\cF$ un espace de Hilbert séparable muni de sa tribu borélienne, et $(X,
 \]
 une version de la probabilité conditionnelle. Une \emph{règle} est une application mesurable $g:\cF\to\{0,1\}$ ; sa probabilité d'erreur est $L(g)\eqdef\PP\{g(X)\neq Y\}$.
 
-\begin{proposition}[Règle de Bayes]\label{prop:bayes}
+\begin{proposition}[Règle de Bayes]\label{prop-bayes}
 La règle $g^*(x)=\1\{\eta(x)>1/2\}$ vérifie $L(g^*)\le L(g)$ pour toute règle $g$, et
 \[
   L^* \eqdef \inf_{g} L(g) = L(g^*) = \E\bigl[\min\{\eta(X),1-\eta(X)\}\bigr].
@@ -26,13 +26,13 @@ avec égalité pour $g=g^*$. On intègre par rapport à la loi de $X$.
 \end{proof}
 
 La même preuve montre que, pour toute application mesurable $T:\cF\to\R^p$, l'erreur de Bayes du problème de prédiction de $Y$ à partir de $T(X)$ vaut
-\begin{equation}\label{eq:bayes-T}
+\begin{equation}\label{eq-bayes-T}
   L^*_{T} \eqdef \inf_{s:\R^p\to\{0,1\}}\PP\{s(T(X))\neq Y\} = \E\bigl[\min\{\eta_T,1-\eta_T\}\bigr],
   \qquad \eta_T\eqdef\PP\bigl(Y=1\mid T(X)\bigr),
 \end{equation}
 et que $L^*_T\ge L^*$, puisque toute règle de la forme $s\circ T$ est une règle sur $\cF$.
 
-\section{Apprentissage automatique par découpage de l'échantillon}\label{sec:decoupage}
+\section{Apprentissage automatique par découpage de l'échantillon}\label{sec-decoupage}
 
 Suivant \citet{devroye1988automatic} et \citet{berlinet2008functional}, on dispose de $n+m$ copies indépendantes $(X_1,Y_1),\dots,(X_{n+m},Y_{n+m})$ de $(X,Y)$, découpées en une \emph{séquence d'apprentissage} $\Dn=\{(X_i,Y_i)\}_{i\le n}$ et une \emph{séquence de validation} $\{(X_i,Y_i)\}_{n<i\le n+m}$. On se donne une collection $\bD_n$, éventuellement infinie, de règles construites à partir de $\Dn$ seulement : chaque $g\in\bD_n$ est de la forme $x\mapsto g(x;\Dn)$. On note
 \[
@@ -41,18 +41,18 @@ Suivant \citet{devroye1988automatic} et \citet{berlinet2008functional}, on dispo
   \hL_{n,m}(g)\eqdef\frac1m\sum_{i=n+1}^{n+m}\1\{g(X_i)\neq Y_i\},
 \]
 où $(X,Y)$ est indépendant des données. La règle retenue $\hg$ minimise l'erreur de validation :
-\begin{equation}\label{eq:erm}
+\begin{equation}\label{eq-erm}
   \hL_{n,m}(\hg) = \min_{g\in\bD_n}\hL_{n,m}(g).
 \end{equation}
 Sa probabilité d'erreur conditionnelle à toutes les données est $L_{n+m}(\hg)\eqdef\PP\{\hg(X)\neq Y\mid (X_i,Y_i)_{i\le n+m}\}$.
 
-\begin{remarque}[Mesurabilité et existence du minimum]\label{rem:mesurabilite}
-Lorsque $\bD_n$ est infinie, le minimum dans \eqref{eq:erm} est atteint car $\hL_{n,m}$ ne prend que $m+1$ valeurs. Nous supposons, comme \citet{devroye1996probabilistic}, que les suprema sur $\bD_n$ qui apparaissent ci-dessous sont mesurables ; c'est le cas dans toutes les situations considérées dans ce mémoire, où $\bD_n$ est finie ou paramétrée de façon continue par un ensemble séparable.
+\begin{remarque}[Mesurabilité et existence du minimum]\label{rem-mesurabilite}
+Lorsque $\bD_n$ est infinie, le minimum dans \eqref{eq-erm} est atteint car $\hL_{n,m}$ ne prend que $m+1$ valeurs. Nous supposons, comme \citet{devroye1996probabilistic}, que les suprema sur $\bD_n$ qui apparaissent ci-dessous sont mesurables ; c'est le cas dans toutes les situations considérées dans ce mémoire, où $\bD_n$ est finie ou paramétrée de façon continue par un ensemble séparable.
 \end{remarque}
 
 Le point clé est que, \emph{conditionnellement à $\Dn$}, les règles de $\bD_n$ sont des fonctions fixées et les couples de validation sont indépendants, de même loi que $(X,Y)$ et indépendants de $\Dn$. Pour $g\in\bD_n$ fixée, $m\hL_{n,m}(g)$ suit donc, conditionnellement à $\Dn$, une loi binomiale de paramètres $m$ et $L_n(g)$.
 
-\begin{lemme}[{\citealp[lemme 8.2]{devroye1996probabilistic}}]\label{lem:selection}
+\begin{lemme}[{\citealp[lemme 8.2]{devroye1996probabilistic}}]\label{lem-selection}
 Avec les notations précédentes,
 \[
   L_{n+m}(\hg) - \inf_{g\in\bD_n}L_n(g) \;\le\; 2\sup_{g\in\bD_n}\bigl|\hL_{n,m}(g)-L_n(g)\bigr|.
@@ -60,12 +60,12 @@ Avec les notations précédentes,
 \end{lemme}
 
 \begin{proof}
-Notons $Z\eqdef\sup_{g\in\bD_n}|\hL_{n,m}(g)-L_n(g)|$. La règle $\hg$ est un élément (aléatoire) de $\bD_n$, et $L_{n+m}(\hg)$ est la valeur en $\hg$ de l'application $g\mapsto L_n(g)$ ; donc $L_{n+m}(\hg)\le \hL_{n,m}(\hg)+Z$. Pour toute $g\in\bD_n$, la définition \eqref{eq:erm} donne $\hL_{n,m}(\hg)\le \hL_{n,m}(g)\le L_n(g)+Z$. Ainsi $L_{n+m}(\hg)\le L_n(g)+2Z$ pour toute $g\in\bD_n$, et l'on passe à l'infimum en $g$.
+Notons $Z\eqdef\sup_{g\in\bD_n}|\hL_{n,m}(g)-L_n(g)|$. La règle $\hg$ est un élément (aléatoire) de $\bD_n$, et $L_{n+m}(\hg)$ est la valeur en $\hg$ de l'application $g\mapsto L_n(g)$ ; donc $L_{n+m}(\hg)\le \hL_{n,m}(\hg)+Z$. Pour toute $g\in\bD_n$, la définition \eqref{eq-erm} donne $\hL_{n,m}(\hg)\le \hL_{n,m}(g)\le L_n(g)+Z$. Ainsi $L_{n+m}(\hg)\le L_n(g)+2Z$ pour toute $g\in\bD_n$, et l'on passe à l'infimum en $g$.
 \end{proof}
 
 Il reste à contrôler l'espérance conditionnelle $\E_n Z$, où $\E_n$ désigne l'espérance conditionnelle à $\Dn$. Les deux bornes qui suivent reposent sur le même argument d'intégration.
 
-\begin{lemme}\label{lem:integration}
+\begin{lemme}\label{lem-integration}
 Soit $Z\ge0$ une variable aléatoire telle que $\PP\{Z>\varepsilon\}\le A e^{-b\varepsilon^2}$ pour tout $\varepsilon>0$, avec $A\ge1$ et $b>0$. Alors, en posant $u=\sqrt{\log(A)/b}$,
 \[
   \E Z \le u + \frac{1}{2bu} \qquad (u>0).
@@ -77,7 +77,7 @@ Pour tout $u>0$, $\E Z=\int_0^\infty\PP\{Z>\varepsilon\}\,d\varepsilon\le u+\int
 $\int_u^\infty e^{-b\varepsilon^2}d\varepsilon\le\frac{1}{u}\int_u^\infty\varepsilon e^{-b\varepsilon^2}d\varepsilon=\frac{e^{-bu^2}}{2bu}$. Avec $u^2=\log(A)/b$, on a $Ae^{-bu^2}=1$.
 \end{proof}
 
-\begin{proposition}[Famille finie]\label{prop:hoeffding}
+\begin{proposition}[Famille finie]\label{prop-hoeffding}
 Si $\Card\bD_n\le N_n<\infty$, alors
 \[
   \E_n\Bigl\{\sup_{g\in\bD_n}\bigl|\hL_{n,m}(g)-L_n(g)\bigr|\Bigr\}\le\sqrt{\frac{\log(2N_n)}{2m}}+\frac{1}{\sqrt{8m\log(2N_n)}}.
@@ -85,12 +85,12 @@ Si $\Card\bD_n\le N_n<\infty$, alors
 \end{proposition}
 
 \begin{proof}
-Conditionnellement à $\Dn$, pour chaque $g$ fixée, $\hL_{n,m}(g)$ est une moyenne de $m$ variables de Bernoulli indépendantes d'espérance $L_n(g)$. L'inégalité de Hoeffding donne $\PP_n\{|\hL_{n,m}(g)-L_n(g)|>\varepsilon\}\le2e^{-2m\varepsilon^2}$, et une borne d'union sur les au plus $N_n$ règles donne $\PP_n\{Z>\varepsilon\}\le2N_ne^{-2m\varepsilon^2}$. Le \cref{lem:integration} avec $A=2N_n$ et $b=2m$ donne $u=\sqrt{\log(2N_n)/(2m)}$ et $\frac{1}{2bu}=\frac{1}{4m u}=\frac{1}{\sqrt{8m\log(2N_n)}}$.
+Conditionnellement à $\Dn$, pour chaque $g$ fixée, $\hL_{n,m}(g)$ est une moyenne de $m$ variables de Bernoulli indépendantes d'espérance $L_n(g)$. L'inégalité de Hoeffding donne $\PP_n\{|\hL_{n,m}(g)-L_n(g)|>\varepsilon\}\le2e^{-2m\varepsilon^2}$, et une borne d'union sur les au plus $N_n$ règles donne $\PP_n\{Z>\varepsilon\}\le2N_ne^{-2m\varepsilon^2}$. Le \cref{lem-integration} avec $A=2N_n$ et $b=2m$ donne $u=\sqrt{\log(2N_n)/(2m)}$ et $\frac{1}{2bu}=\frac{1}{4m u}=\frac{1}{\sqrt{8m\log(2N_n)}}$.
 \end{proof}
 
 Lorsque $\bD_n$ est infinie (plus proches voisins avec tous les $k$, arbres de classification), on mesure sa richesse par le coefficient d'éclatement.
 
-\begin{definition}[Coefficient d'éclatement]\label{def:shatter}
+\begin{definition}[Coefficient d'éclatement]\label{def-shatter}
 Pour une classe $\cA$ de parties mesurables d'un ensemble $\mathcal{Z}$ et un entier $N$,
 \[
   \Sh_{\cA}(N) \eqdef \max_{z_1,\dots,z_N\in\mathcal{Z}}\Card\bigl\{\{z_1,\dots,z_N\}\cap A : A\in\cA\bigr\}.
@@ -98,7 +98,7 @@ Pour une classe $\cA$ de parties mesurables d'un ensemble $\mathcal{Z}$ et un en
 Pour une collection de règles $\bD_n$ fixée (c'est-à-dire conditionnellement à $\Dn$), on note $\cC_n\eqdef\{\{x:g(x)=1\}:g\in\bD_n\}$ et $\Sh_{\cC_n}(N)$ le coefficient correspondant.
 \end{definition}
 
-\begin{lemme}\label{lem:shatter-proprietes}
+\begin{lemme}\label{lem-shatter-proprietes}
 \begin{enumerate}[label=(\roman*)]
   \item Soit $\cA_n\eqdef\bigl\{\{(x,y):g(x)\neq y\}:g\in\bD_n\bigr\}$. Alors $\Sh_{\cA_n}(N)\le\Sh_{\cC_n}(N)$.
   \item Si $\bD_n=\bigcup_{\ell=1}^L\bD_n^{(\ell)}$, alors $\Sh_{\cC_n}(N)\le\sum_{\ell=1}^L\Sh_{\cC_n^{(\ell)}}(N)$.
@@ -112,7 +112,7 @@ Pour une collection de règles $\bD_n$ fixée (c'est-à-dire conditionnellement 
 (iii) La trace de $\{x:g(T(x))=1\}$ sur $\{x_1,\dots,x_N\}$ est l'image réciproque par $T$ de la trace de $\{u:g(u)=1\}$ sur $\{T(x_1),\dots,T(x_N)\}$, ensemble d'au plus $N$ points ; deux règles ayant la même trace sur les $T(x_i)$ ont la même trace sur les $x_i$.
 \end{proof}
 
-\begin{theoreme}[Inégalité de Vapnik--Chervonenkis, {\citealp[théorème 12.5]{devroye1996probabilistic}}]\label{thm:vc}
+\begin{theoreme}[Inégalité de Vapnik--Chervonenkis, {\citealp[théorème 12.5]{devroye1996probabilistic}}]\label{thm-vc}
 Soit $Z_1,\dots,Z_m$ des variables i.i.d. de loi $\nu$ sur $\mathcal{Z}$, $\nu_m$ leur mesure empirique, et $\cA$ une classe de parties mesurables. Pour tout $\varepsilon>0$,
 \[
   \PP\Bigl\{\sup_{A\in\cA}|\nu_m(A)-\nu(A)|>\varepsilon\Bigr\}\le 4\,\Sh_{\cA}(2m)\,e^{-m\varepsilon^2/8}.
@@ -121,18 +121,18 @@ Soit $Z_1,\dots,Z_m$ des variables i.i.d. de loi $\nu$ sur $\mathcal{Z}$, $\nu_m
 
 Nous admettons ce résultat classique, dont la preuve repose sur une double symétrisation et sur l'inégalité de Hoeffding \citep{vapnik1971uniform,devroye1996probabilistic}.
 
-\begin{proposition}[Famille de capacité finie]\label{prop:vc}
+\begin{proposition}[Famille de capacité finie]\label{prop-vc}
 \[
   \E_n\Bigl\{\sup_{g\in\bD_n}\bigl|\hL_{n,m}(g)-L_n(g)\bigr|\Bigr\}\le\sqrt{\frac{8\log\bigl(4\Sh_{\cC_n}(2m)\bigr)}{m}}+\frac{1}{\sqrt{(m/2)\log\bigl(4\Sh_{\cC_n}(2m)\bigr)}}.
 \]
 \end{proposition}
 
 \begin{proof}
-Conditionnellement à $\Dn$, on applique le \cref{thm:vc} aux couples de validation $Z_i=(X_{n+i},Y_{n+i})$ et à la classe $\cA_n$ du \cref{lem:shatter-proprietes}\,(i) : $\nu(\{(x,y):g(x)\neq y\})=L_n(g)$ et $\nu_m(\cdot)=\hL_{n,m}(g)$. Avec (i), $\PP_n\{Z>\varepsilon\}\le4\Sh_{\cC_n}(2m)e^{-m\varepsilon^2/8}$. Le \cref{lem:integration} avec $A=4\Sh_{\cC_n}(2m)\ge4$ et $b=m/8$ donne $u=\sqrt{8\log(4\Sh_{\cC_n}(2m))/m}$ et
+Conditionnellement à $\Dn$, on applique le \cref{thm-vc} aux couples de validation $Z_i=(X_{n+i},Y_{n+i})$ et à la classe $\cA_n$ du \cref{lem-shatter-proprietes}\,(i) : $\nu(\{(x,y):g(x)\neq y\})=L_n(g)$ et $\nu_m(\cdot)=\hL_{n,m}(g)$. Avec (i), $\PP_n\{Z>\varepsilon\}\le4\Sh_{\cC_n}(2m)e^{-m\varepsilon^2/8}$. Le \cref{lem-integration} avec $A=4\Sh_{\cC_n}(2m)\ge4$ et $b=m/8$ donne $u=\sqrt{8\log(4\Sh_{\cC_n}(2m))/m}$ et
 $\frac{1}{2bu}=\frac{4}{mu}=\frac{1}{\sqrt{(m/2)\log(4\Sh_{\cC_n}(2m))}}$.
 \end{proof}
 
-\begin{lemme}\label{lem:monotonie}
+\begin{lemme}\label{lem-monotonie}
 Pour $m\ge1$, la fonction $f_m(u)\eqdef\sqrt{8\log(4u)/m}+1/\sqrt{(m/2)\log(4u)}$ est croissante sur $[1,\infty[$.
 \end{lemme}
 
@@ -140,4 +140,4 @@ Pour $m\ge1$, la fonction $f_m(u)\eqdef\sqrt{8\log(4u)/m}+1/\sqrt{(m/2)\log(4u)}
 Avec $\ell=\sqrt{\log(4u)}\ge\sqrt{\log4}$, on a $f_m=\sqrt{2/m}\,(2\ell+1/\ell)$, et $\ell\mapsto2\ell+1/\ell$ est croissante pour $\ell^2>1/2$, ce qui est le cas car $\log4\approx1{,}386$. Enfin $u\mapsto\ell$ est croissante.
 \end{proof}
 
-Ce lemme permet de remplacer $\Sh_{\cC_n}(2m)$ par n'importe quel majorant dans la \cref{prop:vc}.
+Ce lemme permet de remplacer $\Sh_{\cC_n}(2m)$ par n'importe quel majorant dans la \cref{prop-vc}.
